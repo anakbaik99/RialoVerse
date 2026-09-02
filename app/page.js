@@ -51,6 +51,8 @@ export default function Home() {
           </div>
           <div className="heroOrb">
             <div className="orbital o1"/><div className="orbital o2"/>
+            <span className="particle p1">✦</span><span className="particle p2">·</span>
+            <span className="particle p3">✦</span>
             <div className="r3d">R</div>
           </div>
         </section>
