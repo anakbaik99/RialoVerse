@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
 import { useSearchParams } from "next/navigation";
@@ -103,7 +103,7 @@ function useAnimatedDots(active) {
   return dots;
 }
 
-export default function SwapPage() {
+function SwapContent() {
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -450,5 +450,13 @@ export default function SwapPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function SwapPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}>
+      <SwapContent />
+    </Suspense>
   );
 }
