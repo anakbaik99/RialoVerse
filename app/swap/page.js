@@ -1,6 +1,6 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
-import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
 
@@ -20,6 +20,23 @@ const SWAP_ABI = [
   { name: "swapTokenForETH", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenIn", type: "uint256" }, { name: "minEthOut", type: "uint256" }], outputs: [] },
 ];
 
+const SWAP_ETH_EVENT = {
+  type: "event", name: "SwapETHForToken",
+  inputs: [
+    { name: "user", type: "address", indexed: true },
+    { name: "ethIn", type: "uint256", indexed: false },
+    { name: "tokenOut", type: "uint256", indexed: false },
+  ],
+};
+const SWAP_TOKEN_EVENT = {
+  type: "event", name: "SwapTokenForETH",
+  inputs: [
+    { name: "user", type: "address", indexed: true },
+    { name: "tokenIn", type: "uint256", indexed: false },
+    { name: "ethOut", type: "uint256", indexed: false },
+  ],
+};
+
 const GAS_BUFFER = parseEther("0.0005");
 const SLIPPAGE_OPTIONS = [50, 100, 300];
 
@@ -34,10 +51,13 @@ function formatNice(numStr, maxDecimals = 6) {
 export default function SwapPage() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const publicClient = usePublicClient();
   const [direction, setDirection] = useState("ETH_TO_RIALO");
   const [amountIn, setAmountIn] = useState("");
   const [slippageBps, setSlippageBps] = useState(100);
   const [errorMsg, setErrorMsg] = useState("");
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const { data: ethReserve, refetch: refetchEthReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getEthReserve" });
   const { data: tokenReserve, refetch: refetchTokenReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getTokenReserve" });
@@ -112,6 +132,48 @@ export default function SwapPage() {
   const { isLoading: approveConfirming, isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
   const { isLoading: swapConfirming, isSuccess: swapSuccess, isError: swapReceiptError } = useWaitForTransactionReceipt({ hash: swapHash });
 
+  const loadHistory = useCallback(async () => {
+    if (!address || !publicClient) return;
+    setHistoryLoading(true);
+    try {
+      const latest = await publicClient.getBlockNumber();
+      const fromBlock = latest > 100000n ? latest - 100000n : 0n;
+
+      const [ethLogs, tokenLogs] = await Promise.all([
+        publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_ETH_EVENT, args: { user: address }, fromBlock, toBlock: "latest" }),
+        publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_TOKEN_EVENT, args: { user: address }, fromBlock, toBlock: "latest" }),
+      ]);
+
+      const combined = [
+        ...ethLogs.map((log) => ({
+          type: "ETH_TO_RIALO",
+          amountIn: formatNice(formatEther(log.args.ethIn), 5),
+          amountOut: formatNice(formatUnits(log.args.tokenOut, 18), 2),
+          hash: log.transactionHash,
+          blockNumber: log.blockNumber,
+        })),
+        ...tokenLogs.map((log) => ({
+          type: "RIALO_TO_ETH",
+          amountIn: formatNice(formatUnits(log.args.tokenIn, 18), 2),
+          amountOut: formatNice(formatEther(log.args.ethOut), 5),
+          hash: log.transactionHash,
+          blockNumber: log.blockNumber,
+        })),
+      ];
+
+      combined.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));
+      setHistory(combined.slice(0, 5));
+    } catch (e) {
+      console.error("Failed to load history", e);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [address, publicClient]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
   useEffect(() => {
     if (approveError) setErrorMsg(approveError.shortMessage || "Approve failed. Please try again.");
   }, [approveError]);
@@ -140,6 +202,7 @@ export default function SwapPage() {
       refetchAllowance();
       setAmountIn("");
       setErrorMsg("");
+      loadHistory();
     }
   }, [swapSuccess]);
 
@@ -192,7 +255,7 @@ export default function SwapPage() {
   const highImpact = priceImpact > 5;
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box" }}>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box", gap: 16 }}>
       <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
@@ -293,6 +356,37 @@ export default function SwapPage() {
         {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! ✅</p>}
         {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
       </div>
+
+      {address && (
+        <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
+          <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Recent Swaps</h3>
+          {historyLoading ? (
+            <p style={{ fontSize: 13, color: "#888", textAlign: "center" }}>Loading...</p>
+          ) : history.length === 0 ? (
+            <p style={{ fontSize: 13, color: "#888", textAlign: "center" }}>No swaps yet.</p>
+          ) : (
+            history.map((tx, i) => (
+              <a
+                key={i}
+                href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < history.length - 1 ? "1px solid #f0f0f0" : "none", textDecoration: "none", color: "inherit" }}
+              >
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>
+                    {tx.type === "ETH_TO_RIALO" ? "ETH → RIALO" : "RIALO → ETH"}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#999" }}>
+                    {tx.amountIn} {tx.type === "ETH_TO_RIALO" ? "ETH" : "RIALO"} → {tx.amountOut} {tx.type === "ETH_TO_RIALO" ? "RIALO" : "ETH"}
+                  </div>
+                </div>
+                <span style={{ fontSize: 11, color: "#6d28d9" }}>View ↗</span>
+              </a>
+            ))
+          )}
+        </div>
+      )}
     </main>
   );
 }
