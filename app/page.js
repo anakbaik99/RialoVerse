@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useAccount } from "wagmi";
+import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
 
 const features = [
   ["⇄", "Swap", "Swap tokens instantly with the best rates.", "Go to Swap"],
@@ -19,6 +21,9 @@ const games = [
 
 export default function Home() {
   const [wallet, setWallet] = useState(false);
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const { openAccountModal } = useAccountModal();
   const [dark, setDark] = useState(false);
 
   return (
@@ -31,8 +36,8 @@ export default function Home() {
         </nav>
         <div className="headerActions">
           <button className="network"><i/> Ethereum Sepolia <span>⌄</span></button>
-          <button className="wallet" onClick={() => setWallet(!wallet)}>
-            {wallet ? "0x71...a92F" : "Connect Wallet"}
+          <button className="wallet" onClick={isConnected ? openAccountModal : openConnectModal}>
+            {isConnected ? `${address.slice(0,6)}...${address.slice(-4)}` : "Connect Wallet"}
           </button>
           <button className="theme" onClick={() => setDark(!dark)}>{dark ? "☀" : "☾"}</button>
         </div>
