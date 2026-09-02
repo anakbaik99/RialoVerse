@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
 
@@ -20,6 +20,8 @@ const SWAP_ABI = [
   { name: "swapTokenForETH", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenIn", type: "uint256" }, { name: "minEthOut", type: "uint256" }], outputs: [] },
 ];
 
+const GAS_BUFFER = parseEther("0.0005");
+
 export default function SwapPage() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -35,6 +37,31 @@ export default function SwapPage() {
     args: address ? [address, SWAP_ADDRESS] : undefined,
     query: { enabled: !!address },
   });
+
+  const { data: ethBalance } = useBalance({ address, query: { enabled: !!address } });
+  const { data: rialoBalanceRaw } = useReadContract({
+    address: TOKEN_ADDRESS,
+    abi: TOKEN_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const currentBalanceWei = direction === "ETH_TO_RIALO" ? (ethBalance?.value ?? 0n) : (rialoBalanceRaw ?? 0n);
+  const currentBalanceLabel = direction === "ETH_TO_RIALO"
+    ? (ethBalance ? Number(formatEther(ethBalance.value)).toFixed(5) : "0")
+    : (rialoBalanceRaw !== undefined ? Number(formatUnits(rialoBalanceRaw, 18)).toFixed(2) : "0");
+
+  function setPercentage(pct) {
+    if (!address) return;
+    let base = currentBalanceWei;
+    if (direction === "ETH_TO_RIALO" && pct === 100) {
+      base = base > GAS_BUFFER ? base - GAS_BUFFER : 0n;
+    }
+    const amount = (base * BigInt(pct)) / 100n;
+    const formatted = direction === "ETH_TO_RIALO" ? formatEther(amount) : formatUnits(amount, 18);
+    setAmountIn(formatted);
+  }
 
   const estimatedOut = useMemo(() => {
     if (!amountIn || !ethReserve || !tokenReserve) return "0";
@@ -95,36 +122,58 @@ export default function SwapPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "#f5f4ff" }}>
-      <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}>
+    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box" }}>
+      <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
         </div>
 
-        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 16, marginBottom: 8 }}>
-          <label style={{ fontSize: 12, color: "#888" }}>You pay</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 14, marginBottom: 8, boxSizing: "border-box" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <label style={{ fontSize: 12, color: "#888" }}>You pay</label>
+            {address && (
+              <span style={{ fontSize: 12, color: "#888" }}>
+                Balance: {currentBalanceLabel} {direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
             <input
               type="number"
               placeholder="0.0"
               value={amountIn}
               onChange={(e) => setAmountIn(e.target.value)}
-              style={{ flex: 1, border: "none", background: "transparent", fontSize: 24, outline: "none" }}
+              style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none" }}
             />
-            <span style={{ fontWeight: 700 }}>{direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}</span>
+            <span style={{ fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>{direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}</span>
           </div>
+          {address && (
+            <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+              {[25, 50, 75, 100].map((pct) => (
+                <button
+                  key={pct}
+                  onClick={() => setPercentage(pct)}
+                  style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "1px solid #e0dcf5", background: "#fff", color: "#6d28d9", cursor: "pointer" }}
+                >
+                  {pct === 100 ? "MAX" : `${pct}%`}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
           <button onClick={flipDirection} style={{ border: "none", background: "#ede9fe", borderRadius: 999, width: 36, height: 36, cursor: "pointer" }}>⇅</button>
         </div>
 
-        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 16, marginBottom: 20 }}>
-          <label style={{ fontSize: 12, color: "#888" }}>You receive (estimasi)</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-            <div style={{ flex: 1, fontSize: 24, color: "#333" }}>{Number(estimatedOut).toFixed(6)}</div>
-            <span style={{ fontWeight: 700 }}>{direction === "ETH_TO_RIALO" ? "RIALO" : "ETH"}</span>
+        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 14, marginBottom: 20, boxSizing: "border-box" }}>
+          <label style={{ fontSize: 12, color: "#888" }}>You receive (estimated)</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
+            <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#333", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {Number(estimatedOut).toFixed(6)}
+            </div>
+            <span style={{ fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>{direction === "ETH_TO_RIALO" ? "RIALO" : "ETH"}</span>
           </div>
         </div>
 
@@ -142,14 +191,8 @@ export default function SwapPage() {
           </button>
         )}
 
-        {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap berhasil! ✅</p>}
-        {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve berhasil, sekarang klik Swap.</p>}
-
-        {ethReserve !== undefined && tokenReserve !== undefined && (
-          <p style={{ fontSize: 12, color: "#999", marginTop: 16, textAlign: "center" }}>
-            Pool: {Number(formatEther(ethReserve)).toFixed(4)} ETH / {Number(formatUnits(tokenReserve, 18)).toFixed(2)} RIALO
-          </p>
-        )}
+        {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! ✅</p>}
+        {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
       </div>
     </main>
   );
