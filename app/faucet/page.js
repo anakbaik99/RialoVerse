@@ -5,7 +5,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { formatUnits } from "viem";
 
 const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
-const FAUCET_ADDRESS = "0xf049B73bF8fFd29Eb256e12B0e7C8397A49E4141";
+const FAUCET_ADDRESS = "0xf049b73bf8ffd29eb256e12b0e7c8397a49e4141";
 
 const TOKEN_ABI = [
   { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
