@@ -31,7 +31,7 @@ export default function Home() {
       <header className="topbar">
         <div className="brand"><span className="brandMark">R</span><b>Rialo<span>Verse</span></b></div>
         <nav>
-          <a className="active" href="/">Home</a><a href="/swap">Swap</a><a>Games</a><a>Faucet</a>
+          <a className="active" href="/">Home</a><a href="/swap">Swap</a><a>Games</a><a href="/faucet">Faucet</a>
           <a>Portfolio</a><a>Transactions</a><a>COMI</a>
         </nav>
         <div className="headerActions">
@@ -144,7 +144,7 @@ export default function Home() {
 
       <footer>
         <div><div className="brand"><span className="brandMark">R</span><b>Rialo<span>Verse</span></b></div><p>Swap. Play. Explore.<br/>Everything you need in one decentralized universe.</p></div>
-        <div><b>Explore</b><a>Swap</a><a>Games</a><a>Faucet</a><a>Portfolio</a></div>
+        <div><b>Explore</b><a>Swap</a><a>Games</a><a href="/faucet">Faucet</a><a>Portfolio</a></div>
         <div><b>Resources</b><a>Docs</a><a>Blog</a><a>Help Center</a><a>Brand Kit</a></div>
         <div><b>Community</b><a>Discord</a><a>Twitter</a><a>Telegram</a><a>GitHub</a></div>
         <div><b>Legal</b><a>Terms of Service</a><a>Privacy Policy</a><a>Cookie Policy</a></div>
