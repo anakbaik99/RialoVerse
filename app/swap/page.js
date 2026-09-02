@@ -1,0 +1,232 @@
+"use client";
+import { useState, useMemo } from "react";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
+
+const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
+const SWAP_ADDRESS = "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD";
+
+const TOKEN_ABI = [
+  { name: "approve", type: "function", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
+  { name: "allowance", type: "function", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
+  { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
+];
+
+const SWAP_ABI = [
+  { name: "getEthReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "getTokenReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "swapETHForToken", type: "function", stateMutability: "payable", inputs: [{ name: "minTokenOut", type: "uint256" }], outputs: [] },
+  { name: "swapTokenForETH", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenIn", type: "uint256" }, { name: "minEthOut", type: "uint256" }], outputs: [] },
+];
+
+export default function SwapPage() {
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const [direction, setDirection] = useState("ETH_TO_RIALO");
+  const [amountIn, setAmountIn] = useState("");
+
+  const { data: ethReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getEthReserve" });
+  const { data: tokenReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getTokenReserve" });
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    address: TOKEN_ADDRESS,
+    abi: TOKEN_ABI,
+    functionName: "allowance",
+    args: address ? [address, SWAP_ADDRESS] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const estimatedOut = useMemo(() => {
+    if (!amountIn || !ethReserve || !tokenReserve) return "0";
+    try {
+      const amountInWei = direction === "ETH_TO_RIALO" ? parseEther(amountIn) : parseUnits(amountIn, 18);
+      const reserveIn = direction === "ETH_TO_RIALO" ? ethReserve : tokenReserve;
+      const reserveOut = direction === "ETH_TO_RIALO" ? tokenReserve : ethReserve;
+      const amountInWithFee = amountInWei * 9970n;
+      const numerator = amountInWithFee * reserveOut;
+      const denominator = reserveIn * 10000n + amountInWithFee;
+      const out = numerator / denominator;
+      return direction === "ETH_TO_RIALO" ? formatUnits(out, 18) : formatEther(out);
+    } catch {
+      return "0";
+    }
+  }, [amountIn, ethReserve, tokenReserve, direction]);
+
+  const { writeContract: approve, data: approveHash, isPending: approving } = useWriteContract();
+  const { writeContract: swap, data: swapHash, isPending: swapping } = useWriteContract();
+  const { isLoading: approveConfirming, isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
+  const { isLoading: swapConfirming, isSuccess: swapSuccess } = useWaitForTransactionReceipt({ hash: swapHash });
+
+  const amountInWeiForCheck = (() => {
+    try { return amountIn ? parseUnits(amountIn, 18) : 0n; } catch { return 0n; }
+  })();
+  const needsApproval = direction === "RIALO_TO_ETH" && amountIn && allowance !== undefined && amountInWeiForCheck > allowance;
+
+  function handleApprove() {
+    approve({
+      address: TOKEN_ADDRESS,
+      abi: TOKEN_ABI,
+      functionName: "approve",
+      args: [SWAP_ADDRESS, parseUnits("1000000", 18)],
+    });
+  }
+
+  function handleSwap() {
+    if (!amountIn || Number(amountIn
+cat > app/swap/page.js << 'EOF'
+"use client";
+import { useState, useMemo } from "react";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
+
+const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
+const SWAP_ADDRESS = "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD";
+
+const TOKEN_ABI = [
+  { name: "approve", type: "function", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
+  { name: "allowance", type: "function", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
+  { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
+];
+
+const SWAP_ABI = [
+  { name: "getEthReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "getTokenReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "swapETHForToken", type: "function", stateMutability: "payable", inputs: [{ name: "minTokenOut", type: "uint256" }], outputs: [] },
+  { name: "swapTokenForETH", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenIn", type: "uint256" }, { name: "minEthOut", type: "uint256" }], outputs: [] },
+];
+
+export default function SwapPage() {
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const [direction, setDirection] = useState("ETH_TO_RIALO");
+  const [amountIn, setAmountIn] = useState("");
+
+  const { data: ethReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getEthReserve" });
+  const { data: tokenReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getTokenReserve" });
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    address: TOKEN_ADDRESS,
+    abi: TOKEN_ABI,
+    functionName: "allowance",
+    args: address ? [address, SWAP_ADDRESS] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const estimatedOut = useMemo(() => {
+    if (!amountIn || !ethReserve || !tokenReserve) return "0";
+    try {
+      const amountInWei = direction === "ETH_TO_RIALO" ? parseEther(amountIn) : parseUnits(amountIn, 18);
+      const reserveIn = direction === "ETH_TO_RIALO" ? ethReserve : tokenReserve;
+      const reserveOut = direction === "ETH_TO_RIALO" ? tokenReserve : ethReserve;
+      const amountInWithFee = amountInWei * 9970n;
+      const numerator = amountInWithFee * reserveOut;
+      const denominator = reserveIn * 10000n + amountInWithFee;
+      const out = numerator / denominator;
+      return direction === "ETH_TO_RIALO" ? formatUnits(out, 18) : formatEther(out);
+    } catch {
+      return "0";
+    }
+  }, [amountIn, ethReserve, tokenReserve, direction]);
+
+  const { writeContract: approve, data: approveHash, isPending: approving } = useWriteContract();
+  const { writeContract: swap, data: swapHash, isPending: swapping } = useWriteContract();
+  const { isLoading: approveConfirming, isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
+  const { isLoading: swapConfirming, isSuccess: swapSuccess } = useWaitForTransactionReceipt({ hash: swapHash });
+
+  const amountInWeiForCheck = (() => {
+    try { return amountIn ? parseUnits(amountIn, 18) : 0n; } catch { return 0n; }
+  })();
+  const needsApproval = direction === "RIALO_TO_ETH" && amountIn && allowance !== undefined && amountInWeiForCheck > allowance;
+
+  function handleApprove() {
+    approve({
+      address: TOKEN_ADDRESS,
+      abi: TOKEN_ABI,
+      functionName: "approve",
+      args: [SWAP_ADDRESS, parseUnits("1000000", 18)],
+    });
+  }
+
+  function handleSwap() {
+    if (!amountIn || Number(amountIn) <= 0) return;
+    const slippageBps = 100n;
+    try {
+      if (direction === "ETH_TO_RIALO") {
+        const amountInWei = parseEther(amountIn);
+        const minOut = (parseUnits(estimatedOut || "0", 18) * (10000n - slippageBps)) / 10000n;
+        swap({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "swapETHForToken", args: [minOut], value: amountInWei });
+      } else {
+        const amountInWei = parseUnits(amountIn, 18);
+        const minOut = (parseEther(estimatedOut || "0") * (10000n - slippageBps)) / 10000n;
+        swap({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "swapTokenForETH", args: [amountInWei, minOut] });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function flipDirection() {
+    setDirection(direction === "ETH_TO_RIALO" ? "RIALO_TO_ETH" : "ETH_TO_RIALO");
+    setAmountIn("");
+  }
+
+  return (
+    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "#f5f4ff" }}>
+      <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
+          <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
+        </div>
+
+        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 16, marginBottom: 8 }}>
+          <label style={{ fontSize: 12, color: "#888" }}>You pay</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+            <input
+              type="number"
+              placeholder="0.0"
+              value={amountIn}
+              onChange={(e) => setAmountIn(e.target.value)}
+              style={{ flex: 1, border: "none", background: "transparent", fontSize: 24, outline: "none" }}
+            />
+            <span style={{ fontWeight: 700 }}>{direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
+          <button onClick={flipDirection} style={{ border: "none", background: "#ede9fe", borderRadius: 999, width: 36, height: 36, cursor: "pointer" }}>⇅</button>
+        </div>
+
+        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 16, marginBottom: 20 }}>
+          <label style={{ fontSize: 12, color: "#888" }}>You receive (estimasi)</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+            <div style={{ flex: 1, fontSize: 24, color: "#333" }}>{Number(estimatedOut).toFixed(6)}</div>
+            <span style={{ fontWeight: 700 }}>{direction === "ETH_TO_RIALO" ? "RIALO" : "ETH"}</span>
+          </div>
+        </div>
+
+        {!isConnected ? (
+          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+            Connect Wallet
+          </button>
+        ) : needsApproval ? (
+          <button onClick={handleApprove} disabled={approving || approveConfirming} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#f59e0b", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+            {approving || approveConfirming ? "Approving..." : "Approve RIALO"}
+          </button>
+        ) : (
+          <button onClick={handleSwap} disabled={swapping || swapConfirming || !amountIn} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+            {swapping || swapConfirming ? "Swapping..." : "Swap"}
+          </button>
+        )}
+
+        {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap berhasil! ✅</p>}
+        {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve berhasil, sekarang klik Swap.</p>}
+
+        {ethReserve !== undefined && tokenReserve !== undefined && (
+          <p style={{ fontSize: 12, color: "#999", marginTop: 16, textAlign: "center" }}>
+            Pool: {Number(formatEther(ethReserve)).toFixed(4)} ETH / {Number(formatUnits(tokenReserve, 18)).toFixed(2)} RIALO
+          </p>
+        )}
+      </div>
+    </main>
+  );
+}
