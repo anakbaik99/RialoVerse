@@ -32,7 +32,7 @@ export default function Home() {
         <div className="brand"><span className="brandMark">R</span><b>Rialo<span>Verse</span></b></div>
         <nav>
           <a className="active" href="/">Home</a><a href="/swap">Swap</a><a>Games</a><a href="/faucet">Faucet</a>
-          <a>Portfolio</a><a>Transactions</a><a>COMI</a>
+          <a>Portfolio</a><a>Transactions</a><a href="/comi">COMI</a>
         </nav>
         <div className="headerActions">
           <button className="network"><i/> Ethereum Sepolia <span>⌄</span></button>
