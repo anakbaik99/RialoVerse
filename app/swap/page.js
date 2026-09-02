@@ -2,6 +2,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
+import { useSearchParams } from "next/navigation";
 import { parseEther, formatEther, parseUnits, formatUnits, decodeEventLog } from "viem";
 
 const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
@@ -103,11 +104,23 @@ function useAnimatedDots(active) {
 }
 
 export default function SwapPage() {
+  const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
   const [direction, setDirection] = useState("ETH_TO_RIALO");
   const [amountIn, setAmountIn] = useState("");
+
+  useEffect(() => {
+    const urlDirection = searchParams.get("direction");
+    const urlAmount = searchParams.get("amount");
+    if (urlDirection === "ETH_TO_RIALO" || urlDirection === "RIALO_TO_ETH") {
+      setDirection(urlDirection);
+    }
+    if (urlAmount && !isNaN(Number(urlAmount)) && Number(urlAmount) > 0) {
+      setAmountIn(urlAmount);
+    }
+  }, [searchParams]);
   const [slippageBps, setSlippageBps] = useState(100);
   const [errorMsg, setErrorMsg] = useState("");
   const [history, setHistory] = useState([]);
