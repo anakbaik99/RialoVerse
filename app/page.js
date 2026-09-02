@@ -5,9 +5,9 @@ import { useState } from "react";
 const features = [
   ["⇄", "Swap", "Swap tokens instantly with the best rates.", "Go to Swap"],
   ["🎮", "Games", "Play exciting games and earn rewards.", "Go to Games"],
-  ["◈", "Faucet", "Get test tokens on Ethereum Sepolia.", "Go to Faucet"],
-  ["▣", "Portfolio", "Track your assets and portfolio balance.", "Go to Portfolio"],
-  ["✦", "COMI", "Your AI assistant for everything RialoVerse.", "Chat with COMI"],
+  ["💧", "Faucet", "Get test tokens on Ethereum Sepolia.", "Go to Faucet"],
+  ["$", "Portfolio", "Track your assets and portfolio balance.", "Go to Portfolio"],
+  ["🤖", "COMI", "Your AI assistant for everything RialoVerse.", "Chat with COMI"],
 ];
 
 const games = [
