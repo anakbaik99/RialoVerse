@@ -1,8 +1,8 @@
 "use client";
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from "wagmi";
+import { useState, useMemo, useEffect } from "react";
+import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
-import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
+import { parseEther, formatEther, parseUnits, formatUnits, decodeEventLog } from "viem";
 
 const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
 const SWAP_ADDRESS = "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD";
@@ -36,10 +36,12 @@ const SWAP_TOKEN_EVENT = {
     { name: "ethOut", type: "uint256", indexed: false },
   ],
 };
+const EVENTS_ABI = [SWAP_ETH_EVENT, SWAP_TOKEN_EVENT];
 
 const GAS_BUFFER = parseEther("0.0005");
 const SLIPPAGE_OPTIONS = [50, 100, 300];
 const EXPLORER_TX_BASE = "https://eth-sepolia.blockscout.com/tx/";
+const HISTORY_STORAGE_PREFIX = "rialo_swap_history_";
 
 function formatNice(numStr, maxDecimals = 6) {
   const n = Number(numStr);
@@ -57,17 +59,70 @@ function sanitizeDecimalInput(raw) {
   return v;
 }
 
+function decodeSwapFromReceipt(receipt) {
+  if (!receipt || !receipt.logs) return null;
+  for (const log of receipt.logs) {
+    try {
+      const decoded = decodeEventLog({ abi: EVENTS_ABI, data: log.data, topics: log.topics });
+      if (decoded.eventName === "SwapETHForToken") {
+        return {
+          type: "ETH_TO_RIALO",
+          amountIn: formatNice(formatEther(decoded.args.ethIn), 5),
+          amountOut: formatNice(formatUnits(decoded.args.tokenOut, 18), 2),
+          hash: receipt.transactionHash,
+        };
+      }
+      if (decoded.eventName === "SwapTokenForETH") {
+        return {
+          type: "RIALO_TO_ETH",
+          amountIn: formatNice(formatUnits(decoded.args.tokenIn, 18), 2),
+          amountOut: formatNice(formatEther(decoded.args.ethOut), 5),
+          hash: receipt.transactionHash,
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+function useAnimatedDots(active) {
+  const [dots, setDots] = useState("");
+  useEffect(() => {
+    if (!active) { setDots(""); return; }
+    const seq = ["", ".", "..", "..."];
+    let i = 0;
+    const timer = setInterval(() => {
+      i = (i + 1) % seq.length;
+      setDots(seq[i]);
+    }, 350);
+    return () => clearInterval(timer);
+  }, [active]);
+  return dots;
+}
+
 export default function SwapPage() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
-  const publicClient = usePublicClient();
   const [direction, setDirection] = useState("ETH_TO_RIALO");
   const [amountIn, setAmountIn] = useState("");
   const [slippageBps, setSlippageBps] = useState(100);
   const [errorMsg, setErrorMsg] = useState("");
   const [history, setHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const storageKey = address ? HISTORY_STORAGE_PREFIX + address.toLowerCase() : null;
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      setHistory(saved ? JSON.parse(saved) : []);
+    } catch {
+      setHistory([]);
+    }
+  }, [storageKey]);
 
   const { data: ethReserve, refetch: refetchEthReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getEthReserve" });
   const { data: tokenReserve, refetch: refetchTokenReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getTokenReserve" });
@@ -140,64 +195,12 @@ export default function SwapPage() {
   const { writeContract: approve, data: approveHash, isPending: approving, error: approveError } = useWriteContract();
   const { writeContract: swap, data: swapHash, isPending: swapping, error: swapWriteError } = useWriteContract();
   const { isLoading: approveConfirming, isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
-  const { isLoading: swapConfirming, isSuccess: swapSuccess, isError: swapReceiptError } = useWaitForTransactionReceipt({ hash: swapHash });
+  const { data: swapReceipt, isLoading: swapConfirming, isSuccess: swapSuccess, isError: swapReceiptError } = useWaitForTransactionReceipt({ hash: swapHash });
 
-  const loadHistory = useCallback(async () => {
-    if (!address || !publicClient) return;
-    setHistoryLoading(true);
-    try {
-      const latest = await publicClient.getBlockNumber();
-      const chunkSize = 2000n;
-      const maxChunks = 10;
-      let collected = [];
-
-      for (let i = 0; i < maxChunks; i++) {
-        const toBlock = latest - chunkSize * BigInt(i);
-        if (toBlock < 0n) break;
-        let fromBlock = toBlock - chunkSize + 1n;
-        if (fromBlock < 0n) fromBlock = 0n;
-
-        try {
-          const [ethLogs, tokenLogs] = await Promise.all([
-            publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_ETH_EVENT, args: { user: address }, fromBlock, toBlock }),
-            publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_TOKEN_EVENT, args: { user: address }, fromBlock, toBlock }),
-          ]);
-          collected.push(
-            ...ethLogs.map((log) => ({
-              type: "ETH_TO_RIALO",
-              amountIn: formatNice(formatEther(log.args.ethIn), 5),
-              amountOut: formatNice(formatUnits(log.args.tokenOut, 18), 2),
-              hash: log.transactionHash,
-              blockNumber: log.blockNumber,
-            })),
-            ...tokenLogs.map((log) => ({
-              type: "RIALO_TO_ETH",
-              amountIn: formatNice(formatUnits(log.args.tokenIn, 18), 2),
-              amountOut: formatNice(formatEther(log.args.ethOut), 5),
-              hash: log.transactionHash,
-              blockNumber: log.blockNumber,
-            }))
-          );
-        } catch (chunkErr) {
-          console.error("chunk fetch failed", chunkErr);
-        }
-
-        if (collected.length >= 5) break;
-        if (fromBlock === 0n) break;
-      }
-
-      collected.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));
-      setHistory(collected.slice(0, 5));
-    } catch (e) {
-      console.error("Failed to load history", e);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, [address, publicClient]);
-
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+  const approveBusy = approving || approveConfirming;
+  const swapBusy = swapping || swapConfirming;
+  const approveDots = useAnimatedDots(approveBusy);
+  const swapDots = useAnimatedDots(swapBusy);
 
   useEffect(() => {
     if (approveError) setErrorMsg(approveError.shortMessage || "Approve failed. Please try again.");
@@ -219,7 +222,7 @@ export default function SwapPage() {
   }, [approveSuccess]);
 
   useEffect(() => {
-    if (swapSuccess) {
+    if (swapSuccess && swapReceipt && storageKey) {
       refetchEthReserve();
       refetchTokenReserve();
       refetchEthBalance();
@@ -227,9 +230,18 @@ export default function SwapPage() {
       refetchAllowance();
       setAmountIn("");
       setErrorMsg("");
-      loadHistory();
+
+      const entry = decodeSwapFromReceipt(swapReceipt);
+      if (entry) {
+        setHistory((prev) => {
+          const exists = prev.some((h) => h.hash === entry.hash);
+          const updated = exists ? prev : [entry, ...prev].slice(0, 10);
+          try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      }
     }
-  }, [swapSuccess]);
+  }, [swapSuccess, swapReceipt, storageKey]);
 
   const amountInWeiForCheck = (() => {
     try { return amountIn ? parseUnits(amountIn, 18) : 0n; } catch { return 0n; }
@@ -276,11 +288,16 @@ export default function SwapPage() {
     setErrorMsg("");
   }
 
-  const buttonDisabled = !amountIn || Number(amountIn) <= 0 || insufficientBalance || swapping || swapConfirming;
+  const buttonDisabled = !amountIn || Number(amountIn) <= 0 || insufficientBalance || swapBusy;
   const highImpact = priceImpact > 5;
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box", gap: 16 }}>
+      <style>{`
+        @keyframes rialoPulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
+        .rialo-pulsing { animation: rialoPulse 1.1s ease-in-out infinite; }
+      `}</style>
+
       <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
@@ -377,12 +394,12 @@ export default function SwapPage() {
             Connect Wallet
           </button>
         ) : needsApproval ? (
-          <button onClick={handleApprove} disabled={approving || approveConfirming} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#f59e0b", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
-            {approving || approveConfirming ? "Approving..." : "Approve RIALO"}
+          <button onClick={handleApprove} disabled={approveBusy} className={approveBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#f59e0b", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+            {approveBusy ? `Approving${approveDots}` : "Approve RIALO"}
           </button>
         ) : (
-          <button onClick={handleSwap} disabled={buttonDisabled} style={{ width: "100%", padding: 14, borderRadius: 12, background: buttonDisabled ? "#c4b5fd" : "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16, cursor: buttonDisabled ? "not-allowed" : "pointer" }}>
-            {swapping || swapConfirming ? "Swapping..." : "Swap"}
+          <button onClick={handleSwap} disabled={buttonDisabled} className={swapBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: buttonDisabled ? "#c4b5fd" : "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16, cursor: buttonDisabled ? "not-allowed" : "pointer" }}>
+            {swapBusy ? `Swapping${swapDots}` : "Swap"}
           </button>
         )}
 
@@ -394,14 +411,12 @@ export default function SwapPage() {
       {address && (
         <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
           <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Recent Swaps</h3>
-          {historyLoading ? (
-            <p style={{ fontSize: 13, color: "#888", textAlign: "center" }}>Loading...</p>
-          ) : history.length === 0 ? (
+          {history.length === 0 ? (
             <p style={{ fontSize: 13, color: "#888", textAlign: "center" }}>No swaps yet.</p>
           ) : (
             history.map((tx, i) => (
               <a
-                key={i}
+                key={tx.hash + i}
                 href={`${EXPLORER_TX_BASE}${tx.hash}`}
                 target="_blank"
                 rel="noopener noreferrer"

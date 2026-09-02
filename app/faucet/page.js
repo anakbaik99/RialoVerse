@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
 import { formatUnits } from "viem";
 
 const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
@@ -26,9 +26,25 @@ function formatCountdown(seconds) {
   return `${h}h ${m}m ${s}s`;
 }
 
+function useAnimatedDots(active) {
+  const [dots, setDots] = useState("");
+  useEffect(() => {
+    if (!active) { setDots(""); return; }
+    const seq = ["", ".", "..", "..."];
+    let i = 0;
+    const timer = setInterval(() => {
+      i = (i + 1) % seq.length;
+      setDots(seq[i]);
+    }, 350);
+    return () => clearInterval(timer);
+  }, [active]);
+  return dots;
+}
+
 export default function FaucetPage() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const { openAccountModal } = useAccountModal();
   const [errorMsg, setErrorMsg] = useState("");
   const [countdown, setCountdown] = useState(0);
 
@@ -63,6 +79,9 @@ export default function FaucetPage() {
   const { writeContract: claim, data: claimHash, isPending: claiming, error: claimError } = useWriteContract();
   const { isLoading: claimConfirming, isSuccess: claimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
 
+  const claimBusy = claiming || claimConfirming;
+  const claimDots = useAnimatedDots(claimBusy);
+
   useEffect(() => {
     if (claimError) setErrorMsg(claimError.shortMessage || "Claim failed. Please try again.");
   }, [claimError]);
@@ -80,16 +99,29 @@ export default function FaucetPage() {
     claim({ address: FAUCET_ADDRESS, abi: FAUCET_ABI, functionName: "claim" });
   }
 
-  const canClaim = isConnected && countdown <= 0 && !claiming && !claimConfirming;
+  const canClaim = isConnected && countdown <= 0 && !claimBusy;
   const faucetEmpty = faucetBalance !== undefined && claimAmount !== undefined && faucetBalance < claimAmount;
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box" }}>
+      <style>{`
+        @keyframes rialoPulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
+        .rialo-pulsing { animation: rialoPulse 1.1s ease-in-out infinite; }
+      `}</style>
+
       <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box", textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Faucet</h2>
         </div>
+
+        {isConnected && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "1px solid #e0dcf5", background: "#f7f7fb", color: "#6d28d9", fontWeight: 600, cursor: "pointer" }}>
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </button>
+          </div>
+        )}
 
         <div style={{ fontSize: 40, marginBottom: 8 }}>💧</div>
         <p style={{ color: "#666", fontSize: 14, marginBottom: 20 }}>
@@ -118,8 +150,8 @@ export default function FaucetPage() {
             Next claim in {formatCountdown(countdown)}
           </button>
         ) : (
-          <button onClick={handleClaim} disabled={!canClaim} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16, cursor: canClaim ? "pointer" : "not-allowed" }}>
-            {claiming || claimConfirming ? "Claiming..." : "Claim 50 RIALO"}
+          <button onClick={handleClaim} disabled={!canClaim} className={claimBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16, cursor: canClaim ? "pointer" : "not-allowed" }}>
+            {claimBusy ? `Claiming${claimDots}` : "Claim 50 RIALO"}
           </button>
         )}
 
