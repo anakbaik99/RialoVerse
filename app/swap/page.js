@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
 import { parseEther, formatEther, parseUnits, formatUnits } from "viem";
 
 const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
@@ -39,6 +39,7 @@ const SWAP_TOKEN_EVENT = {
 
 const GAS_BUFFER = parseEther("0.0005");
 const SLIPPAGE_OPTIONS = [50, 100, 300];
+const EXPLORER_TX_BASE = "https://eth-sepolia.blockscout.com/tx/";
 
 function formatNice(numStr, maxDecimals = 6) {
   const n = Number(numStr);
@@ -48,9 +49,18 @@ function formatNice(numStr, maxDecimals = 6) {
   return n.toFixed(maxDecimals).replace(/\.?0+$/, "") || "0";
 }
 
+function sanitizeDecimalInput(raw) {
+  let v = raw.replace(/,/g, ".");
+  v = v.replace(/[^0-9.]/g, "");
+  const parts = v.split(".");
+  if (parts.length > 2) v = parts[0] + "." + parts.slice(1).join("");
+  return v;
+}
+
 export default function SwapPage() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const { openAccountModal } = useAccountModal();
   const publicClient = usePublicClient();
   const [direction, setDirection] = useState("ETH_TO_RIALO");
   const [amountIn, setAmountIn] = useState("");
@@ -137,32 +147,47 @@ export default function SwapPage() {
     setHistoryLoading(true);
     try {
       const latest = await publicClient.getBlockNumber();
-      const fromBlock = latest > 100000n ? latest - 100000n : 0n;
+      const chunkSize = 2000n;
+      const maxChunks = 10;
+      let collected = [];
 
-      const [ethLogs, tokenLogs] = await Promise.all([
-        publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_ETH_EVENT, args: { user: address }, fromBlock, toBlock: "latest" }),
-        publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_TOKEN_EVENT, args: { user: address }, fromBlock, toBlock: "latest" }),
-      ]);
+      for (let i = 0; i < maxChunks; i++) {
+        const toBlock = latest - chunkSize * BigInt(i);
+        if (toBlock < 0n) break;
+        let fromBlock = toBlock - chunkSize + 1n;
+        if (fromBlock < 0n) fromBlock = 0n;
 
-      const combined = [
-        ...ethLogs.map((log) => ({
-          type: "ETH_TO_RIALO",
-          amountIn: formatNice(formatEther(log.args.ethIn), 5),
-          amountOut: formatNice(formatUnits(log.args.tokenOut, 18), 2),
-          hash: log.transactionHash,
-          blockNumber: log.blockNumber,
-        })),
-        ...tokenLogs.map((log) => ({
-          type: "RIALO_TO_ETH",
-          amountIn: formatNice(formatUnits(log.args.tokenIn, 18), 2),
-          amountOut: formatNice(formatEther(log.args.ethOut), 5),
-          hash: log.transactionHash,
-          blockNumber: log.blockNumber,
-        })),
-      ];
+        try {
+          const [ethLogs, tokenLogs] = await Promise.all([
+            publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_ETH_EVENT, args: { user: address }, fromBlock, toBlock }),
+            publicClient.getLogs({ address: SWAP_ADDRESS, event: SWAP_TOKEN_EVENT, args: { user: address }, fromBlock, toBlock }),
+          ]);
+          collected.push(
+            ...ethLogs.map((log) => ({
+              type: "ETH_TO_RIALO",
+              amountIn: formatNice(formatEther(log.args.ethIn), 5),
+              amountOut: formatNice(formatUnits(log.args.tokenOut, 18), 2),
+              hash: log.transactionHash,
+              blockNumber: log.blockNumber,
+            })),
+            ...tokenLogs.map((log) => ({
+              type: "RIALO_TO_ETH",
+              amountIn: formatNice(formatUnits(log.args.tokenIn, 18), 2),
+              amountOut: formatNice(formatEther(log.args.ethOut), 5),
+              hash: log.transactionHash,
+              blockNumber: log.blockNumber,
+            }))
+          );
+        } catch (chunkErr) {
+          console.error("chunk fetch failed", chunkErr);
+        }
 
-      combined.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));
-      setHistory(combined.slice(0, 5));
+        if (collected.length >= 5) break;
+        if (fromBlock === 0n) break;
+      }
+
+      collected.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));
+      setHistory(collected.slice(0, 5));
     } catch (e) {
       console.error("Failed to load history", e);
     } finally {
@@ -257,10 +282,18 @@ export default function SwapPage() {
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box", gap: 16 }}>
       <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
         </div>
+
+        {isConnected && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+            <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "1px solid #e0dcf5", background: "#f7f7fb", color: "#6d28d9", fontWeight: 600, cursor: "pointer" }}>
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </button>
+          </div>
+        )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 10 }}>
           {SLIPPAGE_OPTIONS.map((bps) => (
@@ -290,10 +323,11 @@ export default function SwapPage() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               placeholder="0.0"
               value={amountIn}
-              onChange={(e) => setAmountIn(e.target.value)}
+              onChange={(e) => setAmountIn(sanitizeDecimalInput(e.target.value))}
               style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none" }}
             />
             <span style={{ fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>{direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}</span>
@@ -368,7 +402,7 @@ export default function SwapPage() {
             history.map((tx, i) => (
               <a
                 key={i}
-                href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
+                href={`${EXPLORER_TX_BASE}${tx.hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < history.length - 1 ? "1px solid #f0f0f0" : "none", textDecoration: "none", color: "inherit" }}
