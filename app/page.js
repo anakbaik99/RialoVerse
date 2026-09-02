@@ -41,7 +41,6 @@ export default function Home() {
       <div className="page">
         <section className="hero">
           <div className="heroCopy">
-            <div className="eyebrow">◈ &nbsp; Built on Ethereum Sepolia</div>
             <h1>Welcome to<br/>Rialo<span>Verse</span></h1>
             <p>Swap tokens, play games, and explore a universe of possibilities on the blockchain.</p>
             <div className="heroBtns">
