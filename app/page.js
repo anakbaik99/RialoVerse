@@ -30,6 +30,7 @@ const SWAP_ABI = [
 
 export default function Home() {
   const [wallet, setWallet] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { address, isConnected } = useAccount();
   const { data: ethReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getEthReserve" });
   const { data: tokenReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getTokenReserve" });

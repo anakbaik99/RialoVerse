@@ -68,3 +68,10 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 .dark .gameImage em{background:var(--neon);color:#0a0a0a}
 .dark .game button{border-color:var(--neon);color:var(--neon);background:#0e0f16}
 .dark .tx>span{background:#1a1b26;color:var(--neon);border:2px solid var(--neon)}
+.topbar{justify-content:space-between}
+.hamburger{width:44px;height:44px;background:transparent;border:2px solid var(--neon);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px}
+.hamburger span{width:22px;height:2px;background:var(--neon);display:block}
+.mobileMenu{position:absolute;top:78px;left:0;right:0;background:#0a0a0a;border-top:2px solid var(--neon);border-bottom:2px solid var(--neon);display:flex;flex-direction:column;z-index:20}
+.mobileMenu a{padding:16px 24px;font-size:15px;font-weight:700;color:#fff;border-bottom:1px solid #1a1b26}
+.mobileMenu a.active{color:var(--neon)}
+.mobileMenu a:last-child{border-bottom:0}
