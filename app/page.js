@@ -41,10 +41,9 @@ export default function Home() {
   const poolRialoReserve = tokenReserve ? Number(formatUnits(tokenReserve, 18)) : 0;
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
-  const [dark, setDark] = useState(true);
-
+  
   return (
-    <main className={dark ? "site dark" : "site"}>
+    <main className="site dark">
       <header className="topbar">
         <div className="brand"><span className="brandMark">R</span><b>Rialo<span>Verse</span></b></div>
         <nav>
@@ -56,7 +55,7 @@ export default function Home() {
           <button className="wallet" onClick={isConnected ? openAccountModal : openConnectModal}>
             {isConnected ? `${address.slice(0,6)}...${address.slice(-4)}` : "Connect Wallet"}
           </button>
-          <button className="theme" onClick={() => setDark(!dark)}>{dark ? "☀" : "☾"}</button>
+          
         </div>
       </header>
 
@@ -97,7 +96,7 @@ export default function Home() {
         <section className="security">
           <div className="shield">◇</div>
           <div><b>Secure. Transparent. Decentralized.</b><p>RialoVerse is built with security and transparency at its core.</p></div>
-          <a href="/learn" style={{ padding: "10px 20px", borderRadius: 12, background: "#6d28d9", color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>Learn More →</a>
+          <a href="/learn" className="secLearnMore">Learn More →</a>
         </section>
 
         <section className="section">
