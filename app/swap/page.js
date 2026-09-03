@@ -313,7 +313,7 @@ function SwapContent() {
 
       <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
         </div>
 
@@ -334,7 +334,7 @@ function SwapContent() {
                 padding: "4px 10px", fontSize: 11, borderRadius: 999, cursor: "pointer",
                 border: slippageBps === bps ? "2px solid #d7ff1f" : "2px solid #2a2b3a",
                 background: slippageBps === bps ? "#1a1b26" : "#111218",
-                color: "#6d28d9", fontWeight: 600,
+                color: "#d7ff1f", fontWeight: 600,
               }}
             >
               {bps / 100}%
@@ -443,7 +443,7 @@ function SwapContent() {
                     {tx.amountIn} {tx.type === "ETH_TO_RIALO" ? "ETH" : "RIALO"} → {tx.amountOut} {tx.type === "ETH_TO_RIALO" ? "RIALO" : "ETH"}
                   </div>
                 </div>
-                <span style={{ fontSize: 11, color: "#6d28d9" }}>View ↗</span>
+                <span style={{ fontSize: 11, color: "#d7ff1f" }}>View ↗</span>
               </a>
             ))
           )}
