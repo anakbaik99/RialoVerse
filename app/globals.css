@@ -31,8 +31,8 @@ nav a{transition:color .2s ease}nav a:hover{color:#6840ef}
 .market,.tx{transition:background .2s ease;padding-left:7px;padding-right:7px;border-radius:8px}.market:hover,.tx:hover{background:#faf9ff}
 .particle{position:absolute;color:#8a68ef;font-weight:900;z-index:3;animation:pulseSoft 3s ease-in-out infinite}.p1{top:25px;right:35px;font-size:18px}.p2{bottom:35px;left:50px;font-size:30px;animation-delay:1s}.p3{top:70px;left:90px;font-size:11px;animation-delay:1.7s}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-serif;letter-spacing:-.5px;text-transform:uppercase}
-.hero h1{letter-spacing:-1px}
+h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.hero h1{letter-spacing:1px;line-height:1.08}
 @keyframes slideUpReveal{from{transform:translateY(115%)}to{transform:translateY(0)}}
 .heroTitleMask{display:block;overflow:hidden}
 .heroTitleInner{display:block;animation:slideUpReveal .9s cubic-bezier(.22,1,.36,1) both}
