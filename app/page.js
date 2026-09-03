@@ -97,7 +97,7 @@ export default function Home() {
         <section className="security">
           <div className="shield">◇</div>
           <div><b>Secure. Transparent. Decentralized.</b><p>RialoVerse is built with security and transparency at its core.</p></div>
-          <button>Learn More&nbsp; →</button>
+          <a href="/learn" style={{ padding: "10px 20px", borderRadius: 12, background: "#6d28d9", color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>Learn More →</a>
         </section>
 
         <section className="section">
