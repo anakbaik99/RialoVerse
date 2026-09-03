@@ -78,16 +78,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="stats">
-        <div className="sectionHead">
-          <div><h2>Market Overview</h2><p>Live data from the RialoVerse liquidity pool.</p></div>
-        </div>
-        <Stat icon="◈" title="RIALO Price" value={`${rialoPriceInEth.toFixed(6)} ETH`} change="" />
-        <Stat icon="⛁" title="Pool Liquidity" value={`${poolTvlEth.toFixed(4)} ETH`} change="" />
-        <Stat icon="⬡" title="RIALO in Pool" value={poolRialoReserve.toLocaleString(undefined, {maximumFractionDigits: 2})} change="" />
-        <Stat icon="◆" title="Total Supply" value="1,000,000 RIALO" change="" />
-      </section>
-
         <section className="section">
           <div className="sectionHead">
             <div><h2>Explore the RialoVerse</h2><p>Everything you need in one ecosystem.</p></div>
@@ -123,33 +113,6 @@ export default function Home() {
                 <button>Play Now</button>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="lowerGrid">
-          <div className="panel">
-            <div className="panelHead"><b>Market Overview</b><button>View All →</button></div>
-            <Market name="ETH" sub="Ethereum" price="$3,245.12" change="+2.45%"/>
-            <Market name="USDC" sub="USD Coin" price="$1.00" change="+0.01%"/>
-            <Market name="RIALO" sub="Rialo Token" price="$0.0124" change="+3.21%"/>
-            <Market name="USDT" sub="Tether USD" price="$1.00" change="-0.01%" negative/>
-          </div>
-
-          <div className="panel">
-            <div className="panelHead"><b>Recent Transactions</b><button>View All →</button></div>
-            <Tx icon="⇄" title="Swap" sub="ETH → USDC" amount="+125.50 USDC" time="2 mins ago"/>
-            <Tx icon="↓" title="Receive" sub="From: 0x7R...a1b2" amount="+0.25 ETH" time="5 mins ago"/>
-            <Tx icon="↑" title="Swap" sub="RIALO → ETH" amount="-50.00 RIALO" time="12 mins ago" negative/>
-            <Tx icon="◈" title="Faucet" sub="Claimed Test Tokens" amount="+100 RIALO" time="18 mins ago"/>
-          </div>
-
-          <div className="comi">
-            <div className="comiTop"><b>COMI</b><span>● Online</span></div>
-            <div className="bot">●‿●</div>
-            <h3>Hi! I'm <strong>COMI</strong> 👋</h3>
-            <p>Your AI assistant for everything RialoVerse. How can I help you today?</p>
-            <div className="chips"><button>How to swap?</button><button>What is Rialo?</button><button>Best games?</button><button>How to earn?</button></div>
-            <div className="ask">Ask me anything... <b>➤</b></div>
           </div>
         </section>
 
