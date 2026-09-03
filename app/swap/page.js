@@ -378,7 +378,7 @@ function SwapContent() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
-          <button onClick={flipDirection} style={{ border: "none", background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", width: 36, height: 36, cursor: "pointer" }}>⇅</button>
+          <button onClick={flipDirection} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>⇅</button>
         </div>
 
         <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 10, boxSizing: "border-box" }}>
