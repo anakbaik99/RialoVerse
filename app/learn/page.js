@@ -58,19 +58,19 @@ export default function LearnPage() {
   const active = TOPICS.find((t) => t.id === activeId);
 
   return (
-    <main style={{ minHeight: "100vh", background: "#f5f4ff", padding: "24px 16px", boxSizing: "border-box" }}>
+    <main style={{ minHeight: "100vh", background: "#0a0a0a", padding: "24px 16px", boxSizing: "border-box" }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Learn</h2>
         </div>
 
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#6d28d9", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#d7ff1f", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
             RialoVerse Guide
           </div>
           <h1 style={{ fontSize: 28, margin: "0 0 8px" }}>Learn how everything works</h1>
-          <p style={{ color: "#666", fontSize: 14, margin: 0 }}>Pick a topic below to see how it works and what to expect.</p>
+          <p style={{ color: "#8a8b9c", fontSize: 14, margin: 0 }}>Pick a topic below to see how it works and what to expect.</p>
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 20 }}>
@@ -80,10 +80,10 @@ export default function LearnPage() {
               onClick={() => setActiveId(t.id)}
               style={{
                 padding: "10px 16px",
-                borderRadius: 999,
-                border: activeId === t.id ? "none" : "1px solid #e0dcf5",
-                background: activeId === t.id ? "#6d28d9" : "#fff",
-                color: activeId === t.id ? "#fff" : "#333",
+                borderRadius: 0,
+                border: activeId === t.id ? "2px solid #d7ff1f" : "2px solid #2a2b3a",
+                background: activeId === t.id ? "#d7ff1f" : "#0a0a0a",
+                color: activeId === t.id ? "#0a0a0a" : "#fff",
                 fontWeight: 600,
                 fontSize: 14,
                 cursor: "pointer",
@@ -97,28 +97,28 @@ export default function LearnPage() {
           ))}
         </div>
 
-        <div style={{ background: "#fff", borderRadius: 20, padding: 28, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}>
+        <div style={{ background: "#111218", borderRadius: 0, padding: 28, border: "2px solid #d7ff1f", boxShadow: "none" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>{active.icon}</div>
           <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>{active.title}</h2>
-          <p style={{ color: "#666", fontSize: 15, marginBottom: 20 }}>{active.intro}</p>
+          <p style={{ color: "#8a8b9c", fontSize: 15, marginBottom: 20 }}>{active.intro}</p>
           <ul style={{ paddingLeft: 20, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
             {active.points.map((p, i) => (
-              <li key={i} style={{ fontSize: 14, color: "#333", lineHeight: 1.5 }}>{p}</li>
+              <li key={i} style={{ fontSize: 14, color: "#fff", lineHeight: 1.5 }}>{p}</li>
             ))}
           </ul>
 
           {active.id === "swap" && (
-            <a href="/swap" style={{ display: "inline-block", marginTop: 24, padding: "10px 20px", borderRadius: 12, background: "#6d28d9", color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
+            <a href="/swap" style={{ display: "inline-block", marginTop: 24, padding: "10px 20px", borderRadius: 0, background: "#d7ff1f", color: "#0a0a0a", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
               Try Swap →
             </a>
           )}
           {active.id === "faucet" && (
-            <a href="/faucet" style={{ display: "inline-block", marginTop: 24, padding: "10px 20px", borderRadius: 12, background: "#6d28d9", color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
+            <a href="/faucet" style={{ display: "inline-block", marginTop: 24, padding: "10px 20px", borderRadius: 0, background: "#d7ff1f", color: "#0a0a0a", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
               Try Faucet →
             </a>
           )}
           {active.id === "comi" && (
-            <a href="/comi" style={{ display: "inline-block", marginTop: 24, padding: "10px 20px", borderRadius: 12, background: "#6d28d9", color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
+            <a href="/comi" style={{ display: "inline-block", marginTop: 24, padding: "10px 20px", borderRadius: 0, background: "#d7ff1f", color: "#0a0a0a", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
               Chat with COMI →
             </a>
           )}

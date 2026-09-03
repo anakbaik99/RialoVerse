@@ -69,9 +69,9 @@ export default function ComiPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f5f4ff" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#fff", borderBottom: "1px solid #eee" }}>
-        <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#111218", borderBottom: "2px solid #d7ff1f" }}>
+        <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
         <h2 style={{ margin: 0, fontSize: 18 }}>🤖 COMI</h2>
       </div>
 
@@ -80,8 +80,8 @@ export default function ComiPage() {
           <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
             <div style={{
               maxWidth: "80%", padding: "10px 14px", borderRadius: 16,
-              background: m.role === "user" ? "#6d28d9" : "#fff",
-              color: m.role === "user" ? "#fff" : "#222",
+              background: m.role === "user" ? "#d7ff1f" : "#1a1b26",
+              color: m.role === "user" ? "#0a0a0a" : "#fff",
               fontSize: 14, lineHeight: 1.4,
               boxShadow: m.role === "assistant" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
             }}>
@@ -99,7 +99,7 @@ export default function ComiPage() {
         ))}
         {loading && (
           <div style={{ display: "flex", justifyContent: "flex-start" }}>
-            <div style={{ padding: "10px 14px", borderRadius: 16, background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", fontSize: 14, color: "#999" }}>
+            <div style={{ padding: "10px 14px", borderRadius: 16, background: "#1a1b26", boxShadow: "none", fontSize: 14, color: "#8a8b9c" }}>
               COMI is typing...
             </div>
           </div>
@@ -107,19 +107,19 @@ export default function ComiPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ display: "flex", gap: 8, padding: 12, background: "#fff", borderTop: "1px solid #eee" }}>
+      <div style={{ display: "flex", gap: 8, padding: 12, background: "#111218", borderTop: "2px solid #d7ff1f" }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
           placeholder="Ask COMI anything..."
-          style={{ flex: 1, padding: "10px 14px", borderRadius: 12, border: "1px solid #ddd", fontSize: 14, outline: "none" }}
+          style={{ flex: 1, padding: "10px 14px", borderRadius: 0, border: "2px solid #2a2b3a", background: "#0a0a0a", color: "#fff", fontSize: 14, outline: "none" }}
         />
         <button
           onClick={sendMessage}
           disabled={loading || !input.trim()}
-          style={{ padding: "10px 18px", borderRadius: 12, border: "none", background: "#6d28d9", color: "#fff", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}
+          style={{ padding: "10px 18px", borderRadius: 0, border: "none", background: "#d7ff1f", color: "#0a0a0a", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}
         >
           Send
         </button>

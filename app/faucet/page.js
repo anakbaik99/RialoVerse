@@ -103,34 +103,34 @@ export default function FaucetPage() {
   const faucetEmpty = faucetBalance !== undefined && claimAmount !== undefined && faucetBalance < claimAmount;
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box" }}>
+    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "#0a0a0a", boxSizing: "border-box" }}>
       <style>{`
         @keyframes rialoPulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
         .rialo-pulsing { animation: rialoPulse 1.1s ease-in-out infinite; }
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box", textAlign: "center" }}>
+      <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 24, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box", textAlign: "center" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Faucet</h2>
         </div>
 
         {isConnected && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-            <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "1px solid #e0dcf5", background: "#f7f7fb", color: "#6d28d9", fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}>
               {address.slice(0, 6)}...{address.slice(-4)}
             </button>
           </div>
         )}
 
         <div style={{ fontSize: 40, marginBottom: 8 }}>💧</div>
-        <p style={{ color: "#666", fontSize: 14, marginBottom: 20 }}>
+        <p style={{ color: "#8a8b9c", fontSize: 14, marginBottom: 20 }}>
           Claim free RIALO test tokens once every 24 hours.
         </p>
 
         {address && (
-          <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 14, marginBottom: 20 }}>
-            <div style={{ fontSize: 12, color: "#888" }}>Your RIALO balance</div>
+          <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, color: "#8a8b9c" }}>Your RIALO balance</div>
             <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>
               {rialoBalance !== undefined ? Number(formatUnits(rialoBalance, 18)).toFixed(2) : "0"} RIALO
             </div>
@@ -138,24 +138,24 @@ export default function FaucetPage() {
         )}
 
         {!isConnected ? (
-          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16 }}>
             Connect Wallet
           </button>
         ) : faucetEmpty ? (
-          <button disabled style={{ width: "100%", padding: 14, borderRadius: 12, background: "#c4b5fd", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+          <button disabled style={{ width: "100%", padding: 14, borderRadius: 12, background: "#333", color: "#888", border: "none", fontWeight: 700, fontSize: 16 }}>
             Faucet Empty
           </button>
         ) : countdown > 0 ? (
-          <button disabled style={{ width: "100%", padding: 14, borderRadius: 12, background: "#c4b5fd", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+          <button disabled style={{ width: "100%", padding: 14, borderRadius: 12, background: "#333", color: "#888", border: "none", fontWeight: 700, fontSize: 16 }}>
             Next claim in {formatCountdown(countdown)}
           </button>
         ) : (
-          <button onClick={handleClaim} disabled={!canClaim} className={claimBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16, cursor: canClaim ? "pointer" : "not-allowed" }}>
+          <button onClick={handleClaim} disabled={!canClaim} className={claimBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16, cursor: canClaim ? "pointer" : "not-allowed" }}>
             {claimBusy ? `Claiming${claimDots}` : "Claim 50 RIALO"}
           </button>
         )}
 
-        {errorMsg && <p style={{ color: "#dc2626", marginTop: 12, fontSize: 13 }}>{errorMsg}</p>}
+        {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, fontSize: 13 }}>{errorMsg}</p>}
         {claimSuccess && <p style={{ color: "green", marginTop: 12 }}>Claim successful! ✅ 50 RIALO sent to your wallet.</p>}
       </div>
     </main>

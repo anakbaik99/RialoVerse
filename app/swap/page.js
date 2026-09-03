@@ -305,13 +305,13 @@ function SwapContent() {
   const highImpact = priceImpact > 5;
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#f5f4ff", boxSizing: "border-box", gap: 16 }}>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#0a0a0a", boxSizing: "border-box", gap: 16 }}>
       <style>{`
         @keyframes rialoPulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
         .rialo-pulsing { animation: rialoPulse 1.1s ease-in-out infinite; }
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
+      <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <a href="/" style={{ textDecoration: "none", color: "#6d28d9", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
@@ -319,7 +319,7 @@ function SwapContent() {
 
         {isConnected && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-            <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "1px solid #e0dcf5", background: "#f7f7fb", color: "#6d28d9", fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}>
               {address.slice(0, 6)}...{address.slice(-4)}
             </button>
           </div>
@@ -332,8 +332,8 @@ function SwapContent() {
               onClick={() => setSlippageBps(bps)}
               style={{
                 padding: "4px 10px", fontSize: 11, borderRadius: 999, cursor: "pointer",
-                border: slippageBps === bps ? "1px solid #6d28d9" : "1px solid #e0dcf5",
-                background: slippageBps === bps ? "#ede9fe" : "#fff",
+                border: slippageBps === bps ? "2px solid #d7ff1f" : "2px solid #2a2b3a",
+                background: slippageBps === bps ? "#1a1b26" : "#111218",
                 color: "#6d28d9", fontWeight: 600,
               }}
             >
@@ -342,11 +342,11 @@ function SwapContent() {
           ))}
         </div>
 
-        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 14, marginBottom: 8, boxSizing: "border-box" }}>
+        <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 8, boxSizing: "border-box" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label style={{ fontSize: 12, color: "#888" }}>You pay</label>
+            <label style={{ fontSize: 12, color: "#8a8b9c" }}>You pay</label>
             {address && (
-              <span style={{ fontSize: 12, color: "#888" }}>
+              <span style={{ fontSize: 12, color: "#8a8b9c" }}>
                 Balance: {currentBalanceLabel} {direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}
               </span>
             )}
@@ -368,7 +368,7 @@ function SwapContent() {
                 <button
                   key={pct}
                   onClick={() => setPercentage(pct)}
-                  style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "1px solid #e0dcf5", background: "#fff", color: "#6d28d9", cursor: "pointer" }}
+                  style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "2px solid #2a2b3a", background: "#0a0a0a", color: "#d7ff1f", cursor: "pointer" }}
                 >
                   {pct === 100 ? "MAX" : `${pct}%`}
                 </button>
@@ -378,13 +378,13 @@ function SwapContent() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
-          <button onClick={flipDirection} style={{ border: "none", background: "#ede9fe", borderRadius: 999, width: 36, height: 36, cursor: "pointer" }}>⇅</button>
+          <button onClick={flipDirection} style={{ border: "none", background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", width: 36, height: 36, cursor: "pointer" }}>⇅</button>
         </div>
 
-        <div style={{ background: "#f7f7fb", borderRadius: 14, padding: 14, marginBottom: 10, boxSizing: "border-box" }}>
-          <label style={{ fontSize: 12, color: "#888" }}>You receive (estimated)</label>
+        <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 10, boxSizing: "border-box" }}>
+          <label style={{ fontSize: 12, color: "#8a8b9c" }}>You receive (estimated)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
-            <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#333", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {formatNice(estimatedOut)}
             </div>
             <span style={{ fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>{direction === "ETH_TO_RIALO" ? "RIALO" : "ETH"}</span>
@@ -399,11 +399,11 @@ function SwapContent() {
         )}
 
         {insufficientBalance && (
-          <p style={{ color: "#dc2626", fontSize: 13, textAlign: "center", marginBottom: 10 }}>Insufficient balance.</p>
+          <p style={{ color: "#ff4d4d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>Insufficient balance.</p>
         )}
 
         {!isConnected ? (
-          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
+          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16 }}>
             Connect Wallet
           </button>
         ) : needsApproval ? (
@@ -411,21 +411,21 @@ function SwapContent() {
             {approveBusy ? `Approving${approveDots}` : "Approve RIALO"}
           </button>
         ) : (
-          <button onClick={handleSwap} disabled={buttonDisabled} className={swapBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: buttonDisabled ? "#c4b5fd" : "#6d28d9", color: "#fff", border: "none", fontWeight: 700, fontSize: 16, cursor: buttonDisabled ? "not-allowed" : "pointer" }}>
+          <button onClick={handleSwap} disabled={buttonDisabled} className={swapBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: buttonDisabled ? "#333" : "#d7ff1f", color: buttonDisabled ? "#888" : "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16, cursor: buttonDisabled ? "not-allowed" : "pointer" }}>
             {swapBusy ? `Swapping${swapDots}` : "Swap"}
           </button>
         )}
 
-        {errorMsg && <p style={{ color: "#dc2626", marginTop: 12, textAlign: "center", fontSize: 13 }}>{errorMsg}</p>}
+        {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13 }}>{errorMsg}</p>}
         {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! ✅</p>}
         {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
       </div>
 
       {address && (
-        <div style={{ width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
+        <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
           <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Recent Swaps</h3>
           {history.length === 0 ? (
-            <p style={{ fontSize: 13, color: "#888", textAlign: "center" }}>No swaps yet.</p>
+            <p style={{ fontSize: 13, color: "#8a8b9c", textAlign: "center" }}>No swaps yet.</p>
           ) : (
             history.map((tx, i) => (
               <a
@@ -439,7 +439,7 @@ function SwapContent() {
                   <div style={{ fontSize: 13, fontWeight: 600 }}>
                     {tx.type === "ETH_TO_RIALO" ? "ETH → RIALO" : "RIALO → ETH"}
                   </div>
-                  <div style={{ fontSize: 11, color: "#999" }}>
+                  <div style={{ fontSize: 11, color: "#8a8b9c" }}>
                     {tx.amountIn} {tx.type === "ETH_TO_RIALO" ? "ETH" : "RIALO"} → {tx.amountOut} {tx.type === "ETH_TO_RIALO" ? "RIALO" : "ETH"}
                   </div>
                 </div>
