@@ -41,7 +41,7 @@ export default function Home() {
   const poolRialoReserve = tokenReserve ? Number(formatUnits(tokenReserve, 18)) : 0;
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
 
   return (
     <main className={dark ? "site dark" : "site"}>
@@ -63,7 +63,7 @@ export default function Home() {
       <div className="page">
         <section className="hero">
           <div className="heroCopy">
-            <h1>Welcome to<br/>Rialo<span>Verse</span></h1>
+            <h1 className="heroTitleMask"><span className="heroTitleInner">Welcome to<br/>Rialo<span className="accent">Verse</span></span></h1>
             <p>Swap tokens, play games, and explore a universe of possibilities on the blockchain.</p>
             <div className="heroBtns">
               <button className="primary">Start Exploring&nbsp; →</button>
