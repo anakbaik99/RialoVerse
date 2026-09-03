@@ -36,3 +36,25 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 @keyframes slideUpReveal{from{transform:translateY(115%)}to{transform:translateY(0)}}
 .heroTitleMask{display:block;overflow:hidden}
 .heroTitleInner{display:block;animation:slideUpReveal .9s cubic-bezier(.22,1,.36,1) both}
+:root{--neon:#d7ff1f}
+.site,.stats,.feature,.game,.panel,.newsletter,.security,.network,.theme,.wallet,.primary,.secondary,.linkBtn,.panelHead button,.security button,.gameImage,.gameImage em,.game button,.subscribe input,.subscribe button,.mailIcon,.shield,.comi,.ask,.ask b,.chips button,.brandMark{border-radius:0!important}
+.dark .stats,.dark .feature,.dark .game,.dark .panel,.dark .newsletter,.dark .security{border-width:2px;border-color:#2a2b3a}
+.dark .brandMark,.dark .wallet,.dark .primary{background:var(--neon);color:#0a0a0a;box-shadow:none}
+.dark .network,.dark .theme,.dark .secondary{border-width:2px}
+.dark nav .active{color:var(--neon);border-color:var(--neon)}
+.dark .brand b span{color:var(--neon)}
+.dark .hero h1 .accent{color:var(--neon)}
+.dark .feature button,.dark .panelHead button,.dark .linkBtn{color:var(--neon)}
+.dark .security{border-width:2px;border-color:var(--neon)}
+.dark .security button{border-width:2px;border-color:var(--neon);color:var(--neon)}
+.dark .r3d{color:var(--neon);text-shadow:12px 16px 0 #333,20px 25px 45px #00000055}
+.dark .orbital{border-color:var(--neon)}
+.dark .particle{color:var(--neon)}
+.dark .heroOrb:after{background:#d7ff1f22}
+.dark .comi{background:#0e0f16;border:2px solid var(--neon);box-shadow:none}
+.dark .bot{background:var(--neon);color:#0a0a0a}
+.dark .chips button{border-width:2px;border-color:var(--neon);color:var(--neon)}
+.dark .ask{border-width:2px}
+.dark .ask b{background:var(--neon);color:#0a0a0a}
+.dark .typeCursor{color:var(--neon)}
+.dark .wallet,.dark .primary{border:2px solid var(--neon)}
