@@ -75,3 +75,5 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 .mobileMenu a{padding:16px 24px;font-size:15px;font-weight:700;color:#fff;border-bottom:1px solid #1a1b26}
 .mobileMenu a.active{color:var(--neon)}
 .mobileMenu a:last-child{border-bottom:0}
+.mobileMenu{height:auto!important;flex:none!important;gap:0!important}
+.mobileMenu a{height:auto!important;display:block!important;width:100%;box-sizing:border-box}
