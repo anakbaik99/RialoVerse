@@ -5,7 +5,6 @@ const TOPICS = [
   {
     id: "wallet",
     label: "Wallet Connect",
-    icon: "👛",
     title: "Connecting Your Wallet",
     intro: "How RialoVerse links to your wallet safely, without ever touching your funds.",
     points: [
@@ -18,7 +17,6 @@ const TOPICS = [
   {
     id: "swap",
     label: "Swap",
-    icon: "🔄",
     title: "Swapping ETH & RIALO",
     intro: "An automated market maker (AMM) pool lets you trade ETH and RIALO instantly on Sepolia testnet.",
     points: [
@@ -32,7 +30,6 @@ const TOPICS = [
   {
     id: "faucet",
     label: "Faucet",
-    icon: "💧",
     title: "Claiming Free RIALO",
     intro: "Get test tokens to try out RialoVerse without spending real funds.",
     points: [
@@ -45,7 +42,6 @@ const TOPICS = [
   {
     id: "comi",
     label: "COMI",
-    icon: "🤖",
     title: "COMI, Your AI Assistant",
     intro: "An AI chat assistant powered by Google Gemini that understands RialoVerse and can help you take action.",
     points: [
