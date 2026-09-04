@@ -136,7 +136,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
   position: relative;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .rv-brand {
@@ -1490,7 +1490,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 100px 30px 30px;
+    padding: 90px 25px 20px;
     background: #080a0e;
     flex-direction: column;
     align-items: flex-start;
