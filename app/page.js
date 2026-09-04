@@ -27,7 +27,7 @@ const SWAP_ABI = [
 const features = [
   {
     number: "01",
-    icon: "⇄",
+    icon: "swap",
     title: "Swap",
     headline: "Move assets without the complexity.",
     description:
@@ -36,7 +36,7 @@ const features = [
   },
   {
     number: "02",
-    icon: "◈",
+    icon: "games",
     title: "Games",
     headline: "Play inside the universe.",
     description:
@@ -45,7 +45,7 @@ const features = [
   },
   {
     number: "03",
-    icon: "◇",
+    icon: "faucet",
     title: "Faucet",
     headline: "Get test tokens and experiment.",
     description:
@@ -54,7 +54,7 @@ const features = [
   },
   {
     number: "04",
-    icon: "$",
+    icon: "portfolio",
     title: "Portfolio",
     headline: "See your assets in one place.",
     description:
@@ -63,7 +63,7 @@ const features = [
   },
   {
     number: "05",
-    icon: "✦",
+    icon: "comi",
     title: "COMI",
     headline: "Your AI companion for RialoVerse.",
     description:
@@ -78,6 +78,73 @@ const games = [
   ["⚔", "Battle Arena", "PvP Battle", "1,532 Players", ""],
   ["◆", "Token Match", "Match & Earn", "654 Players", ""],
 ];
+
+function FeatureIcon({ name, size = 28 }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  };
+
+  if (name === "swap") {
+    return (
+      <svg {...common}>
+        <path d="M4 8h13l-3-3" />
+        <path d="M20 16H7l3 3" />
+      </svg>
+    );
+  }
+
+  if (name === "games") {
+    return (
+      <svg {...common}>
+        <rect x="3" y="8" width="18" height="9" rx="4" />
+        <path d="M8 12h-2 M7 11v2" />
+        <circle cx="16" cy="11.5" r="0.8" fill="currentColor" />
+        <circle cx="18" cy="13.5" r="0.8" fill="currentColor" />
+        <path d="M9 5c1-1.2 5-1.2 6 0" />
+      </svg>
+    );
+  }
+
+  if (name === "faucet") {
+    return (
+      <svg {...common}>
+        <path d="M6 4v6" />
+        <path d="M6 7h9a2 2 0 0 1 2 2v1" />
+        <path d="M17 10v2" />
+        <path d="M17 15l-1.2 2.2a1.2 1.2 0 0 0 2.4 0L17 15z" />
+        <path d="M4 18h9l-1.5 3h-6L4 18z" />
+      </svg>
+    );
+  }
+
+  if (name === "portfolio") {
+    return (
+      <svg {...common}>
+        <path d="M12 3a9 9 0 1 0 9 9h-9V3z" />
+        <path d="M14 8l3-1.5-1-3" />
+        <path d="M13 9l4-2" />
+      </svg>
+    );
+  }
+
+  if (name === "comi") {
+    return (
+      <svg {...common}>
+        <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
+        <path d="M19 16l0.7 1.8L21.5 18.5l-1.8 0.7L19 21l-0.7-1.8-1.8-0.7 1.8-0.7L19 16z" />
+      </svg>
+    );
+  }
+
+  return null;
+}
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -339,7 +406,7 @@ export default function Home() {
                 </span>
 
                 <span className="rv-feature-icon">
-                  {feature.icon}
+                  <FeatureIcon name={feature.icon} size={20} />
                 </span>
 
                 <span className="rv-feature-name">
@@ -355,7 +422,7 @@ export default function Home() {
             <div className="rv-display-grid" />
 
             <div className="rv-display-orb">
-              <span>{features[activeFeature].icon}</span>
+              <FeatureIcon name={features[activeFeature].icon} size={64} />
             </div>
 
             <div className="rv-display-content">
