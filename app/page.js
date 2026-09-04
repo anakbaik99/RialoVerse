@@ -59,7 +59,7 @@ const features = [
     headline: "See your assets in one place.",
     description:
       "Keep track of your on-chain assets and understand your activity at a glance.",
-    href: "#portfolio",
+    href: "/portfolio",
   },
   {
     number: "05",
