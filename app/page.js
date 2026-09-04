@@ -275,9 +275,11 @@ export default function Home() {
           <div className="rv-orbit-node node-three">COMI</div>
           <div className="rv-orbit-node node-four">FAUCET</div>
 
-          <div className="rv-star star-one">✦</div>
-          <div className="rv-star star-two">✦</div>
+          <div className="rv-star star-one">·</div>
+          <div className="rv-star star-two">·</div>
           <div className="rv-star star-three">·</div>
+          <div className="rv-star star-four">·</div>
+          <div className="rv-star star-five">·</div>
         </div>
 
         <div className="rv-scroll">

@@ -441,6 +441,18 @@ body {
   animation-delay: 2s;
 }
 
+.star-four {
+  top: 25%;
+  left: 8%;
+  animation-delay: 0.5s;
+}
+
+.star-five {
+  bottom: 25%;
+  right: 25%;
+  animation-delay: 1.5s;
+}
+
 .rv-scroll {
   position: absolute;
   bottom: 22px;
