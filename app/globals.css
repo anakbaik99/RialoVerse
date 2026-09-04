@@ -1826,3 +1826,186 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 .rv-section-top h2 span {
   color: var(--rv-neon);
 }
+
+/* =====================================================
+   RIALOVERSE MOBILE MENU - R-DEX STYLE
+===================================================== */
+
+@media (max-width: 800px) {
+
+  .rv-nav {
+    position: relative;
+    z-index: 10001;
+  }
+
+  .rv-nav-actions {
+    position: relative;
+    z-index: 10003;
+  }
+
+  .rv-menu {
+    position: relative;
+    z-index: 10004;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    background: #080a0e;
+    border: 1px solid #252a32;
+    cursor: pointer;
+  }
+
+  .rv-menu span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #d7ff1f;
+    transition: .25s ease;
+  }
+
+  .rv-menu-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .rv-menu-open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .rv-menu-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .rv-mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: #030507;
+    padding: 22px 30px 30px;
+    overflow-y: auto;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateX(100%);
+    transition:
+      transform .3s ease,
+      opacity .3s ease,
+      visibility .3s ease;
+  }
+
+  .rv-mobile-menu.rv-mobile-open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .rv-mobile-header {
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .rv-mobile-header .rv-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #f2f3f0;
+    text-decoration: none;
+  }
+
+  .rv-mobile-header .rv-brand-mark {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #30353d;
+    color: #d7ff1f;
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .rv-mobile-header .rv-brand > span:last-child {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+
+  .rv-mobile-header .rv-brand > span:last-child span {
+    color: #d7ff1f;
+  }
+
+  .rv-mobile-close {
+    width: 68px;
+    height: 68px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #181c22;
+    border-radius: 16px;
+    background: #080b0e;
+    color: #777e89;
+    font-size: 42px;
+    font-weight: 200;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .rv-mobile-panel {
+    min-height: calc(100vh - 130px);
+    padding: 40px 30px 36px;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    border: 1px solid #15191f;
+    box-sizing: border-box;
+  }
+
+  .rv-mobile-panel > a:not(.rv-mobile-launch) {
+    display: block;
+    width: 100%;
+    padding: 0 0 34px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid #20242a;
+    color: #777d89;
+    text-decoration: none;
+    font-size: 22px;
+    letter-spacing: 1px;
+    transition: color .2s ease;
+  }
+
+  .rv-mobile-panel > a:not(.rv-mobile-launch):first-child {
+    color: #d7ff1f;
+  }
+
+  .rv-mobile-panel > a:not(.rv-mobile-launch):hover {
+    color: #d7ff1f;
+  }
+
+  .rv-mobile-launch {
+    width: 100%;
+    min-height: 82px;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 42px;
+    background: #e1e6f0;
+    color: #172238 !important;
+    text-decoration: none;
+    font-size: 21px;
+    font-weight: 700;
+    box-sizing: border-box;
+  }
+
+  .rv-mobile-launch span {
+    font-size: 20px;
+  }
+
+  body:has(.rv-mobile-open) {
+    overflow: hidden;
+  }
+}
