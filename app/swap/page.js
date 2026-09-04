@@ -64,7 +64,7 @@ function decimalsOf(sym) { return sym === "ETH" ? 18 : POOLS[sym].decimals; }
 
 function TokenIcon({ token, size = 20 }) {
   if (token === "ETH") {
-    return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "#fff", color: "#0a0a0a", fontSize: size * 0.55, fontWeight: 800, flexShrink: 0 }}>\u039e</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "#fff", color: "#0a0a0a", fontSize: size * 0.55, fontWeight: 800, flexShrink: 0 }}>Ξ</span>;
   }
   const cfg = POOLS[token];
   return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: cfg.iconBg, color: cfg.iconColor, fontSize: size * 0.5, fontWeight: 800, flexShrink: 0 }}>{cfg.iconLetter}</span>;
@@ -332,7 +332,7 @@ function SwapContent() {
 
       <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>\u2190 RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
         </div>
 
@@ -376,7 +376,7 @@ function SwapContent() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
-          <button onClick={() => { const f = fromToken; selectFrom(toToken); setToToken(f); }} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>\u21c5</button>
+          <button onClick={() => { const f = fromToken; selectFrom(toToken); setToToken(f); }} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>⇅</button>
         </div>
 
         <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 6, boxSizing: "border-box" }}>
@@ -396,7 +396,7 @@ function SwapContent() {
         {amountIn && Number(amountIn) > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: highImpact ? "#ff4d4d" : "#8a8b9c", marginBottom: 14, padding: "0 2px" }}>
             <span>Price impact</span>
-            <span style={{ fontWeight: highImpact ? 700 : 400 }}>{priceImpact.toFixed(2)}%{highImpact ? " \u26a0\ufe0f High" : ""}</span>
+            <span style={{ fontWeight: highImpact ? 700 : 400 }}>{priceImpact.toFixed(2)}%{highImpact ? " ⚠️ High" : ""}</span>
           </div>
         )}
 
@@ -415,7 +415,7 @@ function SwapContent() {
         )}
 
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13 }}>{errorMsg}</p>}
-        {swapStep === "done" && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! \u2705</p>}
+        {swapStep === "done" && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! ✅</p>}
         {approveSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
       </div>
     </main>
