@@ -360,9 +360,12 @@ function SwapContent() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
             <input type="text" inputMode="decimal" placeholder="0.0" value={amountIn} onChange={(e) => setAmountIn(sanitizeDecimalInput(e.target.value))}
               style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none", color: "#fff" }} />
-            <select value={fromToken} onChange={(e) => selectFrom(e.target.value)} style={{ background: "#0a0a0a", color: "#fff", border: "2px solid #2a2b3a", borderRadius: 0, padding: "6px 8px", fontWeight: 700, fontSize: 13 }}>
-              {TOKEN_LIST.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "2px solid #2a2b3a", flexShrink: 0 }}>
+              <TokenIcon token={fromToken} size={18} />
+              <select value={fromToken} onChange={(e) => selectFrom(e.target.value)} style={{ background: "transparent", color: "#fff", border: "none", padding: "6px 6px 6px 0", fontWeight: 700, fontSize: 13 }}>
+                {TOKEN_LIST.map((t) => <option key={t} value={t} style={{ background: "#0a0a0a" }}>{t}</option>)}
+              </select>
+            </div>
           </div>
           {address && (
             <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
@@ -383,9 +386,12 @@ function SwapContent() {
           <label style={{ fontSize: 12, color: "#8a8b9c" }}>To (estimated)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
             <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formatNice(estimatedOut)}</div>
-            <select value={toToken} onChange={(e) => selectTo(e.target.value)} style={{ background: "#0a0a0a", color: "#fff", border: "2px solid #2a2b3a", borderRadius: 0, padding: "6px 8px", fontWeight: 700, fontSize: 13 }}>
-              {TOKEN_LIST.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#0a0a0a", border: "2px solid #2a2b3a", flexShrink: 0 }}>
+              <TokenIcon token={toToken} size={18} />
+              <select value={toToken} onChange={(e) => selectTo(e.target.value)} style={{ background: "transparent", color: "#fff", border: "none", padding: "6px 6px 6px 0", fontWeight: 700, fontSize: 13 }}>
+                {TOKEN_LIST.map((t) => <option key={t} value={t} style={{ background: "#0a0a0a" }}>{t}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
