@@ -27,78 +27,47 @@ const GENERIC_SWAP_ABI = [
 
 const SWAP_ETH_EVENT = {
   type: "event", name: "SwapETHForToken",
-  inputs: [
-    { name: "user", type: "address", indexed: true },
-    { name: "ethIn", type: "uint256", indexed: false },
-    { name: "tokenOut", type: "uint256", indexed: false },
-  ],
+  inputs: [{ name: "user", type: "address", indexed: true }, { name: "ethIn", type: "uint256", indexed: false }, { name: "tokenOut", type: "uint256", indexed: false }],
 };
 const SWAP_TOKEN_EVENT = {
   type: "event", name: "SwapTokenForETH",
-  inputs: [
-    { name: "user", type: "address", indexed: true },
-    { name: "tokenIn", type: "uint256", indexed: false },
-    { name: "ethOut", type: "uint256", indexed: false },
-  ],
+  inputs: [{ name: "user", type: "address", indexed: true }, { name: "tokenIn", type: "uint256", indexed: false }, { name: "ethOut", type: "uint256", indexed: false }],
 };
 const GENERIC_SWAP_EVENT = {
   type: "event", name: "Swap",
-  inputs: [
-    { name: "user", type: "address", indexed: true },
-    { name: "ethToToken", type: "bool", indexed: false },
-    { name: "amountIn", type: "uint256", indexed: false },
-    { name: "amountOut", type: "uint256", indexed: false },
-  ],
+  inputs: [{ name: "user", type: "address", indexed: true }, { name: "ethToToken", type: "bool", indexed: false }, { name: "amountIn", type: "uint256", indexed: false }, { name: "amountOut", type: "uint256", indexed: false }],
 };
 
-const TOKENS = {
+const POOLS = {
   RIALO: {
-    symbol: "RIALO",
-    decimals: 18,
+    symbol: "RIALO", decimals: 18,
     tokenAddress: "0xEf601624E09126E369887D2845B68F4f9e968831",
     swapAddress: "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD",
-    swapAbi: LEGACY_SWAP_ABI,
-    ethFnName: "swapETHForToken",
-    tokenFnName: "swapTokenForETH",
-    kind: "legacy",
-    iconLetter: "R",
-    iconBg: "#d7ff1f",
-    iconColor: "#0a0a0a",
+    swapAbi: LEGACY_SWAP_ABI, ethFnName: "swapETHForToken", tokenFnName: "swapTokenForETH", kind: "legacy",
+    iconLetter: "R", iconBg: "#d7ff1f", iconColor: "#0a0a0a",
   },
   USDC: {
-    symbol: "USDC",
-    decimals: 6,
+    symbol: "USDC", decimals: 6,
     tokenAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
     swapAddress: "0x4168105b335d1ae53f52fB6dAf6F35aa4816036b",
-    swapAbi: GENERIC_SWAP_ABI,
-    ethFnName: "swapEthForToken",
-    tokenFnName: "swapTokenForEth",
-    kind: "generic",
-    iconLetter: "$",
-    iconBg: "#2775CA",
-    iconColor: "#fff",
+    swapAbi: GENERIC_SWAP_ABI, ethFnName: "swapEthForToken", tokenFnName: "swapTokenForEth", kind: "generic",
+    iconLetter: "$", iconBg: "#2775CA", iconColor: "#fff",
   },
 };
 
+const TOKEN_LIST = ["ETH", "RIALO", "USDC"];
 const GAS_BUFFER = parseEther("0.0005");
 const SLIPPAGE_OPTIONS = [50, 100, 300];
 const EXPLORER_TX_BASE = "https://eth-sepolia.blockscout.com/tx/";
-const HISTORY_STORAGE_PREFIX = "rialo_swap_history_";
+
+function decimalsOf(sym) { return sym === "ETH" ? 18 : POOLS[sym].decimals; }
 
 function TokenIcon({ token, size = 20 }) {
   if (token === "ETH") {
-    return (
-      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "#fff", color: "#0a0a0a", fontSize: size * 0.55, fontWeight: 800, flexShrink: 0 }}>
-        \u039e
-      </span>
-    );
+    return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "#fff", color: "#0a0a0a", fontSize: size * 0.55, fontWeight: 800, flexShrink: 0 }}>\u039e</span>;
   }
-  const cfg = TOKENS[token];
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: cfg.iconBg, color: cfg.iconColor, fontSize: size * 0.5, fontWeight: 800, flexShrink: 0 }}>
-      {cfg.iconLetter}
-    </span>
-  );
+  const cfg = POOLS[token];
+  return <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: cfg.iconBg, color: cfg.iconColor, fontSize: size * 0.5, fontWeight: 800, flexShrink: 0 }}>{cfg.iconLetter}</span>;
 }
 
 function formatNice(numStr, maxDecimals = 6) {
@@ -117,40 +86,28 @@ function sanitizeDecimalInput(raw) {
   return v;
 }
 
-function decodeSwapFromReceipt(receipt, token) {
+function quoteOut(amountInWei, reserveIn, reserveOut) {
+  if (!reserveIn || !reserveOut || amountInWei <= 0n) return 0n;
+  const amountInWithFee = amountInWei * 9970n;
+  const numerator = amountInWithFee * reserveOut;
+  const denominator = reserveIn * 10000n + amountInWithFee;
+  return numerator / denominator;
+}
+
+function decodeHopReceipt(receipt, poolKey) {
   if (!receipt || !receipt.logs) return null;
-  const abi = token.kind === "legacy" ? [SWAP_ETH_EVENT, SWAP_TOKEN_EVENT] : [GENERIC_SWAP_EVENT];
+  const pool = POOLS[poolKey];
+  const abi = pool.kind === "legacy" ? [SWAP_ETH_EVENT, SWAP_TOKEN_EVENT] : [GENERIC_SWAP_EVENT];
   for (const log of receipt.logs) {
     try {
       const decoded = decodeEventLog({ abi, data: log.data, topics: log.topics });
-      if (decoded.eventName === "SwapETHForToken") {
-        return {
-          type: "ETH_TO_TOKEN",
-          amountIn: formatNice(formatEther(decoded.args.ethIn), 5),
-          amountOut: formatNice(formatUnits(decoded.args.tokenOut, token.decimals), 2),
-          hash: receipt.transactionHash,
-        };
-      }
-      if (decoded.eventName === "SwapTokenForETH") {
-        return {
-          type: "TOKEN_TO_ETH",
-          amountIn: formatNice(formatUnits(decoded.args.tokenIn, token.decimals), 2),
-          amountOut: formatNice(formatEther(decoded.args.ethOut), 5),
-          hash: receipt.transactionHash,
-        };
-      }
+      if (decoded.eventName === "SwapETHForToken") return { ethIn: decoded.args.ethIn, tokenOut: decoded.args.tokenOut, ethToToken: true };
+      if (decoded.eventName === "SwapTokenForETH") return { tokenIn: decoded.args.tokenIn, ethOut: decoded.args.ethOut, ethToToken: false };
       if (decoded.eventName === "Swap") {
-        const ethToToken = decoded.args.ethToToken;
-        return {
-          type: ethToToken ? "ETH_TO_TOKEN" : "TOKEN_TO_ETH",
-          amountIn: formatNice(ethToToken ? formatEther(decoded.args.amountIn) : formatUnits(decoded.args.amountIn, token.decimals), ethToToken ? 5 : 2),
-          amountOut: formatNice(ethToToken ? formatUnits(decoded.args.amountOut, token.decimals) : formatEther(decoded.args.amountOut), ethToToken ? 2 : 5),
-          hash: receipt.transactionHash,
-        };
+        if (decoded.args.ethToToken) return { ethIn: decoded.args.amountIn, tokenOut: decoded.args.amountOut, ethToToken: true };
+        return { tokenIn: decoded.args.amountIn, ethOut: decoded.args.amountOut, ethToToken: false };
       }
-    } catch {
-      continue;
-    }
+    } catch { continue; }
   }
   return null;
 }
@@ -161,10 +118,7 @@ function useAnimatedDots(active) {
     if (!active) { setDots(""); return; }
     const seq = ["", ".", "..", "..."];
     let i = 0;
-    const timer = setInterval(() => {
-      i = (i + 1) % seq.length;
-      setDots(seq[i]);
-    }, 350);
+    const timer = setInterval(() => { i = (i + 1) % seq.length; setDots(seq[i]); }, 350);
     return () => clearInterval(timer);
   }, [active]);
   return dots;
@@ -175,214 +129,199 @@ function SwapContent() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
-  const [tokenKey, setTokenKey] = useState("RIALO");
-  const token = TOKENS[tokenKey];
-  const [direction, setDirection] = useState("ETH_TO_TOKEN");
-  const [amountIn, setAmountIn] = useState("");
 
-  useEffect(() => {
-    const urlDirection = searchParams.get("direction");
-    const urlAmount = searchParams.get("amount");
-    const urlToken = searchParams.get("token");
-    if (urlToken && TOKENS[urlToken]) setTokenKey(urlToken);
-    if (urlDirection === "ETH_TO_RIALO" || urlDirection === "ETH_TO_TOKEN") setDirection("ETH_TO_TOKEN");
-    if (urlDirection === "RIALO_TO_ETH" || urlDirection === "TOKEN_TO_ETH") setDirection("TOKEN_TO_ETH");
-    if (urlAmount && !isNaN(Number(urlAmount)) && Number(urlAmount) > 0) {
-      setAmountIn(urlAmount);
-    }
-  }, [searchParams]);
+  const [fromToken, setFromToken] = useState("ETH");
+  const [toToken, setToToken] = useState("RIALO");
+  const [amountIn, setAmountIn] = useState("");
   const [slippageBps, setSlippageBps] = useState(100);
   const [errorMsg, setErrorMsg] = useState("");
-  const [history, setHistory] = useState([]);
-
-  const storageKey = address ? `${HISTORY_STORAGE_PREFIX}${address.toLowerCase()}_${token.symbol}` : null;
+  const [swapStep, setSwapStep] = useState("idle");
+  const [hop1EthOut, setHop1EthOut] = useState(null);
 
   useEffect(() => {
-    if (!storageKey) return;
-    try {
-      const saved = localStorage.getItem(storageKey);
-      setHistory(saved ? JSON.parse(saved) : []);
-    } catch {
-      setHistory([]);
-    }
-  }, [storageKey]);
+    const urlAmount = searchParams.get("amount");
+    const urlFrom = searchParams.get("from");
+    const urlTo = searchParams.get("to");
+    const urlDirection = searchParams.get("direction");
+    if (urlFrom && TOKEN_LIST.includes(urlFrom)) setFromToken(urlFrom);
+    if (urlTo && TOKEN_LIST.includes(urlTo)) setToToken(urlTo);
+    if (urlDirection === "ETH_TO_RIALO") { setFromToken("ETH"); setToToken("RIALO"); }
+    if (urlDirection === "RIALO_TO_ETH") { setFromToken("RIALO"); setToToken("ETH"); }
+    if (urlAmount && !isNaN(Number(urlAmount)) && Number(urlAmount) > 0) setAmountIn(urlAmount);
+  }, [searchParams]);
 
-  function selectToken(key) {
-    if (key === tokenKey) return;
-    setTokenKey(key);
-    setAmountIn("");
-    setErrorMsg("");
-    setDirection("ETH_TO_TOKEN");
+  function selectFrom(sym) {
+    if (sym === fromToken) return;
+    setAmountIn(""); setErrorMsg(""); setSwapStep("idle");
+    if (sym === toToken) setToToken(fromToken);
+    setFromToken(sym);
+  }
+  function selectTo(sym) {
+    if (sym === toToken) return;
+    setAmountIn(""); setErrorMsg(""); setSwapStep("idle");
+    if (sym === fromToken) setFromToken(toToken);
+    setToToken(sym);
   }
 
-  const { data: ethReserve, refetch: refetchEthReserve } = useReadContract({ address: token.swapAddress, abi: token.swapAbi, functionName: "getEthReserve" });
-  const { data: tokenReserve, refetch: refetchTokenReserve } = useReadContract({ address: token.swapAddress, abi: token.swapAbi, functionName: "getTokenReserve" });
-  const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: token.tokenAddress,
-    abi: TOKEN_ABI,
-    functionName: "allowance",
-    args: address ? [address, token.swapAddress] : undefined,
-    query: { enabled: !!address },
-  });
+  const routeType = fromToken === "ETH" ? "eth-to-token" : toToken === "ETH" ? "token-to-eth" : "routed";
+  const directPoolKey = routeType === "eth-to-token" ? toToken : routeType === "token-to-eth" ? fromToken : null;
+  const isRouted = routeType === "routed";
+
+  const { data: rialoEth, refetch: refetchRialoEth } = useReadContract({ address: POOLS.RIALO.swapAddress, abi: POOLS.RIALO.swapAbi, functionName: "getEthReserve" });
+  const { data: rialoTok, refetch: refetchRialoTok } = useReadContract({ address: POOLS.RIALO.swapAddress, abi: POOLS.RIALO.swapAbi, functionName: "getTokenReserve" });
+  const { data: usdcEth, refetch: refetchUsdcEth } = useReadContract({ address: POOLS.USDC.swapAddress, abi: POOLS.USDC.swapAbi, functionName: "getEthReserve" });
+  const { data: usdcTok, refetch: refetchUsdcTok } = useReadContract({ address: POOLS.USDC.swapAddress, abi: POOLS.USDC.swapAbi, functionName: "getTokenReserve" });
+
+  const reserves = { RIALO: { eth: rialoEth, tok: rialoTok }, USDC: { eth: usdcEth, tok: usdcTok } };
 
   const { data: ethBalance, refetch: refetchEthBalance } = useBalance({ address, query: { enabled: !!address } });
-  const { data: tokenBalanceRaw, refetch: refetchTokenBalance } = useReadContract({
-    address: token.tokenAddress,
-    abi: TOKEN_ABI,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-    query: { enabled: !!address },
-  });
+  const { data: rialoBalance, refetch: refetchRialoBalance } = useReadContract({ address: POOLS.RIALO.tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: address ? [address] : undefined, query: { enabled: !!address } });
+  const { data: usdcBalance, refetch: refetchUsdcBalance } = useReadContract({ address: POOLS.USDC.tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: address ? [address] : undefined, query: { enabled: !!address } });
 
-  const currentBalanceWei = direction === "ETH_TO_TOKEN" ? (ethBalance?.value ?? 0n) : (tokenBalanceRaw ?? 0n);
-  const currentBalanceLabel = direction === "ETH_TO_TOKEN"
+  const balances = { ETH: ethBalance?.value ?? 0n, RIALO: rialoBalance ?? 0n, USDC: usdcBalance ?? 0n };
+  const currentBalanceWei = balances[fromToken] ?? 0n;
+  const currentBalanceLabel = fromToken === "ETH"
     ? (ethBalance ? formatNice(formatEther(ethBalance.value), 5) : "0")
-    : (tokenBalanceRaw !== undefined ? formatNice(formatUnits(tokenBalanceRaw, token.decimals), 2) : "0");
+    : formatNice(formatUnits(currentBalanceWei, decimalsOf(fromToken)), 2);
+
+  const fromPoolKey = fromToken !== "ETH" ? fromToken : null;
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    address: fromPoolKey ? POOLS[fromPoolKey].tokenAddress : undefined,
+    abi: TOKEN_ABI, functionName: "allowance",
+    args: address && fromPoolKey ? [address, POOLS[fromPoolKey].swapAddress] : undefined,
+    query: { enabled: !!address && !!fromPoolKey },
+  });
 
   function setPercentage(pct) {
     if (!address) return;
     let base = currentBalanceWei;
-    if (direction === "ETH_TO_TOKEN" && pct === 100) {
-      base = base > GAS_BUFFER ? base - GAS_BUFFER : 0n;
-    }
+    if (fromToken === "ETH" && pct === 100) base = base > GAS_BUFFER ? base - GAS_BUFFER : 0n;
     const amount = (base * BigInt(pct)) / 100n;
-    const formatted = direction === "ETH_TO_TOKEN" ? formatEther(amount) : formatUnits(amount, token.decimals);
-    setAmountIn(formatted);
+    setAmountIn(fromToken === "ETH" ? formatEther(amount) : formatUnits(amount, decimalsOf(fromToken)));
   }
 
-  const estimatedOut = useMemo(() => {
-    if (!amountIn || !ethReserve || !tokenReserve) return "0";
+  const estimatedOutWei = useMemo(() => {
+    if (!amountIn || Number(amountIn) <= 0) return 0n;
     try {
-      const amountInWei = direction === "ETH_TO_TOKEN" ? parseEther(amountIn) : parseUnits(amountIn, token.decimals);
-      const reserveIn = direction === "ETH_TO_TOKEN" ? ethReserve : tokenReserve;
-      const reserveOut = direction === "ETH_TO_TOKEN" ? tokenReserve : ethReserve;
-      const amountInWithFee = amountInWei * 9970n;
-      const numerator = amountInWithFee * reserveOut;
-      const denominator = reserveIn * 10000n + amountInWithFee;
-      const out = numerator / denominator;
-      return direction === "ETH_TO_TOKEN" ? formatUnits(out, token.decimals) : formatEther(out);
-    } catch {
-      return "0";
-    }
-  }, [amountIn, ethReserve, tokenReserve, direction, token]);
+      const amountInWei = parseUnits(amountIn, decimalsOf(fromToken));
+      if (routeType === "eth-to-token") {
+        const r = reserves[toToken];
+        return quoteOut(amountInWei, r.eth, r.tok);
+      }
+      if (routeType === "token-to-eth") {
+        const r = reserves[fromToken];
+        return quoteOut(amountInWei, r.tok, r.eth);
+      }
+      const r1 = reserves[fromToken];
+      const hop1 = quoteOut(amountInWei, r1.tok, r1.eth);
+      const r2 = reserves[toToken];
+      return quoteOut(hop1, r2.eth, r2.tok);
+    } catch { return 0n; }
+  }, [amountIn, fromToken, toToken, routeType, rialoEth, rialoTok, usdcEth, usdcTok]);
+
+  const estimatedOut = formatUnits(estimatedOutWei, decimalsOf(toToken));
 
   const priceImpact = useMemo(() => {
-    if (!amountIn || !ethReserve || !tokenReserve || Number(amountIn) <= 0) return 0;
+    if (!amountIn || Number(amountIn) <= 0) return 0;
     try {
-      const amountInWei = direction === "ETH_TO_TOKEN" ? parseEther(amountIn) : parseUnits(amountIn, token.decimals);
-      const reserveIn = direction === "ETH_TO_TOKEN" ? ethReserve : tokenReserve;
-      const reserveOut = direction === "ETH_TO_TOKEN" ? tokenReserve : ethReserve;
-      const noImpactOut = (amountInWei * reserveOut) / reserveIn;
-      const actualOutWei = direction === "ETH_TO_TOKEN" ? parseUnits(estimatedOut || "0", token.decimals) : parseEther(estimatedOut || "0");
+      const amountInWei = parseUnits(amountIn, decimalsOf(fromToken));
+      let noImpactOut;
+      if (routeType === "eth-to-token") {
+        const r = reserves[toToken];
+        if (!r.eth || r.eth === 0n) return 0;
+        noImpactOut = (amountInWei * r.tok) / r.eth;
+      } else if (routeType === "token-to-eth") {
+        const r = reserves[fromToken];
+        if (!r.tok || r.tok === 0n) return 0;
+        noImpactOut = (amountInWei * r.eth) / r.tok;
+      } else {
+        const r1 = reserves[fromToken];
+        if (!r1.tok || r1.tok === 0n) return 0;
+        const noImpactHop1 = (amountInWei * r1.eth) / r1.tok;
+        const r2 = reserves[toToken];
+        if (!r2.eth || r2.eth === 0n) return 0;
+        noImpactOut = (noImpactHop1 * r2.tok) / r2.eth;
+      }
       if (noImpactOut === 0n) return 0;
-      const diff = noImpactOut - actualOutWei;
-      const impactBps = (diff * 10000n) / noImpactOut;
-      return Number(impactBps) / 100;
-    } catch {
-      return 0;
-    }
-  }, [amountIn, ethReserve, tokenReserve, direction, estimatedOut, token]);
+      const diff = noImpactOut - estimatedOutWei;
+      return Number((diff * 10000n) / noImpactOut) / 100;
+    } catch { return 0; }
+  }, [amountIn, fromToken, toToken, routeType, estimatedOutWei]);
 
   const { writeContract: approve, data: approveHash, isPending: approving, error: approveError } = useWriteContract();
   const { writeContract: swap, data: swapHash, isPending: swapping, error: swapWriteError } = useWriteContract();
   const { isLoading: approveConfirming, isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
-  const { data: swapReceipt, isLoading: swapConfirming, isSuccess: swapSuccess, isError: swapReceiptError } = useWaitForTransactionReceipt({ hash: swapHash });
+  const { data: swapReceipt, isLoading: swapConfirming, isSuccess: swapTxSuccess, isError: swapReceiptError } = useWaitForTransactionReceipt({ hash: swapHash });
 
   const approveBusy = approving || approveConfirming;
-  const swapBusy = swapping || swapConfirming;
+  const swapBusy = swapping || swapConfirming || swapStep === "hop1" || swapStep === "hop2";
   const approveDots = useAnimatedDots(approveBusy);
   const swapDots = useAnimatedDots(swapBusy);
 
-  useEffect(() => {
-    if (approveError) setErrorMsg(approveError.shortMessage || "Approve failed. Please try again.");
-  }, [approveError]);
+  useEffect(() => { if (approveError) setErrorMsg(approveError.shortMessage || "Approve failed."); }, [approveError]);
+  useEffect(() => { if (swapWriteError) setErrorMsg(swapWriteError.shortMessage || "Swap rejected or failed."); }, [swapWriteError]);
+  useEffect(() => { if (swapReceiptError) setErrorMsg("Transaction failed on-chain."); }, [swapReceiptError]);
+  useEffect(() => { if (approveSuccess) { refetchAllowance(); setErrorMsg(""); } }, [approveSuccess]);
+
+  function refetchAll() {
+    refetchRialoEth(); refetchRialoTok(); refetchUsdcEth(); refetchUsdcTok();
+    refetchEthBalance(); refetchRialoBalance(); refetchUsdcBalance(); refetchAllowance();
+  }
 
   useEffect(() => {
-    if (swapWriteError) setErrorMsg(swapWriteError.shortMessage || "Swap was rejected or failed.");
-  }, [swapWriteError]);
-
-  useEffect(() => {
-    if (swapReceiptError) setErrorMsg("Transaction failed on-chain. Please check and try again.");
-  }, [swapReceiptError]);
-
-  useEffect(() => {
-    if (approveSuccess) {
-      refetchAllowance();
-      setErrorMsg("");
-    }
-  }, [approveSuccess]);
-
-  useEffect(() => {
-    if (swapSuccess && swapReceipt && storageKey) {
-      refetchEthReserve();
-      refetchTokenReserve();
-      refetchEthBalance();
-      refetchTokenBalance();
-      refetchAllowance();
+    if (!swapTxSuccess || !swapReceipt) return;
+    if (swapStep === "hop1" && isRouted) {
+      const decoded = decodeHopReceipt(swapReceipt, fromToken);
+      const ethOut = decoded?.ethOut ?? 0n;
+      setHop1EthOut(ethOut);
+      const toPool = POOLS[toToken];
+      const minOut = (quoteOut(ethOut, reserves[toToken].eth, reserves[toToken].tok) * (10000n - BigInt(slippageBps))) / 10000n;
+      setSwapStep("hop2");
+      swap({ address: toPool.swapAddress, abi: toPool.swapAbi, functionName: toPool.ethFnName, args: [minOut], value: ethOut });
+    } else if (swapStep === "hop2" || (swapStep === "hop1" && !isRouted)) {
+      setSwapStep("done");
+      refetchAll();
       setAmountIn("");
       setErrorMsg("");
-
-      const entry = decodeSwapFromReceipt(swapReceipt, token);
-      if (entry) {
-        setHistory((prev) => {
-          const exists = prev.some((h) => h.hash === entry.hash);
-          const updated = exists ? prev : [entry, ...prev].slice(0, 10);
-          try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
-          return updated;
-        });
-      }
     }
-  }, [swapSuccess, swapReceipt, storageKey]);
+  }, [swapTxSuccess, swapReceipt]);
 
-  const amountInWeiForCheck = (() => {
-    try { return amountIn ? parseUnits(amountIn, token.decimals) : 0n; } catch { return 0n; }
-  })();
-  const needsApproval = direction === "TOKEN_TO_ETH" && amountIn && allowance !== undefined && amountInWeiForCheck > allowance;
-  const insufficientBalance = amountIn && (() => {
-    try {
-      const wei = direction === "ETH_TO_TOKEN" ? parseEther(amountIn) : parseUnits(amountIn, token.decimals);
-      return wei > currentBalanceWei;
-    } catch { return false; }
-  })();
+  const amountInWeiForCheck = (() => { try { return amountIn ? parseUnits(amountIn, decimalsOf(fromToken)) : 0n; } catch { return 0n; } })();
+  const needsApproval = fromToken !== "ETH" && amountIn && allowance !== undefined && amountInWeiForCheck > allowance;
+  const insufficientBalance = amountIn && (() => { try { return amountInWeiForCheck > currentBalanceWei; } catch { return false; } })();
 
   function handleApprove() {
     setErrorMsg("");
-    approve({
-      address: token.tokenAddress,
-      abi: TOKEN_ABI,
-      functionName: "approve",
-      args: [token.swapAddress, parseUnits("1000000", token.decimals)],
-    });
+    const pool = POOLS[fromToken];
+    approve({ address: pool.tokenAddress, abi: TOKEN_ABI, functionName: "approve", args: [pool.swapAddress, parseUnits("1000000", pool.decimals)] });
   }
 
   function handleSwap() {
     if (!amountIn || Number(amountIn) <= 0) return;
     setErrorMsg("");
     try {
-      if (direction === "ETH_TO_TOKEN") {
-        const amountInWei = parseEther(amountIn);
-        const minOut = (parseUnits(estimatedOut || "0", token.decimals) * (10000n - BigInt(slippageBps))) / 10000n;
-        swap({ address: token.swapAddress, abi: token.swapAbi, functionName: token.ethFnName, args: [minOut], value: amountInWei });
+      const amountInWei = parseUnits(amountIn, decimalsOf(fromToken));
+      const minOut = (estimatedOutWei * (10000n - BigInt(slippageBps))) / 10000n;
+      if (routeType === "eth-to-token") {
+        const pool = POOLS[toToken];
+        setSwapStep("hop1");
+        swap({ address: pool.swapAddress, abi: pool.swapAbi, functionName: pool.ethFnName, args: [minOut], value: amountInWei });
+      } else if (routeType === "token-to-eth") {
+        const pool = POOLS[fromToken];
+        setSwapStep("hop1");
+        swap({ address: pool.swapAddress, abi: pool.swapAbi, functionName: pool.tokenFnName, args: [amountInWei, minOut] });
       } else {
-        const amountInWei = parseUnits(amountIn, token.decimals);
-        const minOut = (parseEther(estimatedOut || "0") * (10000n - BigInt(slippageBps))) / 10000n;
-        swap({ address: token.swapAddress, abi: token.swapAbi, functionName: token.tokenFnName, args: [amountInWei, minOut] });
+        const pool = POOLS[fromToken];
+        const r1 = reserves[fromToken];
+        const hop1MinOut = (quoteOut(amountInWei, r1.tok, r1.eth) * (10000n - BigInt(slippageBps))) / 10000n;
+        setSwapStep("hop1");
+        swap({ address: pool.swapAddress, abi: pool.swapAbi, functionName: pool.tokenFnName, args: [amountInWei, hop1MinOut] });
       }
-    } catch (e) {
-      setErrorMsg("Invalid amount.");
-    }
-  }
-
-  function flipDirection() {
-    setDirection(direction === "ETH_TO_TOKEN" ? "TOKEN_TO_ETH" : "ETH_TO_TOKEN");
-    setAmountIn("");
-    setErrorMsg("");
+    } catch (e) { setErrorMsg("Invalid amount."); }
   }
 
   const buttonDisabled = !amountIn || Number(amountIn) <= 0 || insufficientBalance || swapBusy;
   const highImpact = priceImpact > 5;
-  const payLabel = direction === "ETH_TO_TOKEN" ? "ETH" : token.symbol;
-  const receiveLabel = direction === "ETH_TO_TOKEN" ? token.symbol : "ETH";
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#0a0a0a", boxSizing: "border-box", gap: 16 }}>
@@ -397,24 +336,6 @@ function SwapContent() {
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          {Object.keys(TOKENS).map((key) => (
-            <button
-              key={key}
-              onClick={() => selectToken(key)}
-              style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                padding: "8px 0", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer",
-                border: tokenKey === key ? "2px solid #d7ff1f" : "2px solid #2a2b3a",
-                background: tokenKey === key ? "#1a1b26" : "#0a0a0a",
-                color: tokenKey === key ? "#d7ff1f" : "#8a8b9c",
-              }}
-            >
-              <TokenIcon token={key} size={16} /> {key}
-            </button>
-          ))}
-        </div>
-
         {isConnected && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button onClick={openAccountModal} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}>
@@ -425,16 +346,7 @@ function SwapContent() {
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginBottom: 10 }}>
           {SLIPPAGE_OPTIONS.map((bps) => (
-            <button
-              key={bps}
-              onClick={() => setSlippageBps(bps)}
-              style={{
-                padding: "4px 10px", fontSize: 11, borderRadius: 999, cursor: "pointer",
-                border: slippageBps === bps ? "2px solid #d7ff1f" : "2px solid #2a2b3a",
-                background: slippageBps === bps ? "#1a1b26" : "#111218",
-                color: "#d7ff1f", fontWeight: 600,
-              }}
-            >
+            <button key={bps} onClick={() => setSlippageBps(bps)} style={{ padding: "4px 10px", fontSize: 11, borderRadius: 999, cursor: "pointer", border: slippageBps === bps ? "2px solid #d7ff1f" : "2px solid #2a2b3a", background: slippageBps === bps ? "#1a1b26" : "#111218", color: "#d7ff1f", fontWeight: 600 }}>
               {bps / 100}%
             </button>
           ))}
@@ -442,34 +354,20 @@ function SwapContent() {
 
         <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 8, boxSizing: "border-box" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label style={{ fontSize: 12, color: "#8a8b9c" }}>You pay</label>
-            {address && (
-              <span style={{ fontSize: 12, color: "#8a8b9c" }}>
-                Balance: {currentBalanceLabel} {payLabel}
-              </span>
-            )}
+            <label style={{ fontSize: 12, color: "#8a8b9c" }}>From</label>
+            {address && <span style={{ fontSize: 12, color: "#8a8b9c" }}>Balance: {currentBalanceLabel} {fromToken}</span>}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="0.0"
-              value={amountIn}
-              onChange={(e) => setAmountIn(sanitizeDecimalInput(e.target.value))}
-              style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none", color: "#fff" }}
-            />
-            <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>
-              <TokenIcon token={payLabel} /> {payLabel}
-            </span>
+            <input type="text" inputMode="decimal" placeholder="0.0" value={amountIn} onChange={(e) => setAmountIn(sanitizeDecimalInput(e.target.value))}
+              style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none", color: "#fff" }} />
+            <select value={fromToken} onChange={(e) => selectFrom(e.target.value)} style={{ background: "#0a0a0a", color: "#fff", border: "2px solid #2a2b3a", borderRadius: 0, padding: "6px 8px", fontWeight: 700, fontSize: 13 }}>
+              {TOKEN_LIST.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
           {address && (
             <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
               {[25, 50, 75, 100].map((pct) => (
-                <button
-                  key={pct}
-                  onClick={() => setPercentage(pct)}
-                  style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "2px solid #2a2b3a", background: "#0a0a0a", color: "#d7ff1f", cursor: "pointer" }}
-                >
+                <button key={pct} onClick={() => setPercentage(pct)} style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "2px solid #2a2b3a", background: "#0a0a0a", color: "#d7ff1f", cursor: "pointer" }}>
                   {pct === 100 ? "MAX" : `${pct}%`}
                 </button>
               ))}
@@ -478,20 +376,22 @@ function SwapContent() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
-          <button onClick={flipDirection} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>\u21c5</button>
+          <button onClick={() => { const f = fromToken; selectFrom(toToken); setToToken(f); }} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>\u21c5</button>
         </div>
 
-        <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 10, boxSizing: "border-box" }}>
-          <label style={{ fontSize: 12, color: "#8a8b9c" }}>You receive (estimated)</label>
+        <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 6, boxSizing: "border-box" }}>
+          <label style={{ fontSize: 12, color: "#8a8b9c" }}>To (estimated)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
-            <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {formatNice(estimatedOut)}
-            </div>
-            <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>
-              <TokenIcon token={receiveLabel} /> {receiveLabel}
-            </span>
+            <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formatNice(estimatedOut)}</div>
+            <select value={toToken} onChange={(e) => selectTo(e.target.value)} style={{ background: "#0a0a0a", color: "#fff", border: "2px solid #2a2b3a", borderRadius: 0, padding: "6px 8px", fontWeight: 700, fontSize: 13 }}>
+              {TOKEN_LIST.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
         </div>
+
+        {isRouted && (
+          <div style={{ fontSize: 11, color: "#8a8b9c", marginBottom: 10, padding: "0 2px" }}>Routed via ETH \u2022 2 transactions required</div>
+        )}
 
         {amountIn && Number(amountIn) > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: highImpact ? "#ff4d4d" : "#8a8b9c", marginBottom: 14, padding: "0 2px" }}>
@@ -500,57 +400,24 @@ function SwapContent() {
           </div>
         )}
 
-        {insufficientBalance && (
-          <p style={{ color: "#ff4d4d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>Insufficient balance.</p>
-        )}
+        {insufficientBalance && <p style={{ color: "#ff4d4d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>Insufficient balance.</p>}
 
         {!isConnected ? (
-          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16 }}>
-            Connect Wallet
-          </button>
+          <button onClick={openConnectModal} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16 }}>Connect Wallet</button>
         ) : needsApproval ? (
           <button onClick={handleApprove} disabled={approveBusy} className={approveBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#f59e0b", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
-            {approveBusy ? `Approving${approveDots}` : `Approve ${token.symbol}`}
+            {approveBusy ? `Approving${approveDots}` : `Approve ${fromToken}`}
           </button>
         ) : (
           <button onClick={handleSwap} disabled={buttonDisabled} className={swapBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: buttonDisabled ? "#333" : "#d7ff1f", color: buttonDisabled ? "#888" : "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16, cursor: buttonDisabled ? "not-allowed" : "pointer" }}>
-            {swapBusy ? `Swapping${swapDots}` : "Swap"}
+            {swapStep === "hop1" && isRouted ? `Step 1/2${swapDots}` : swapStep === "hop2" ? `Step 2/2${swapDots}` : swapBusy ? `Swapping${swapDots}` : "Swap"}
           </button>
         )}
 
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13 }}>{errorMsg}</p>}
-        {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! \u2705</p>}
-        {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
+        {swapStep === "done" && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! \u2705</p>}
+        {approveSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
       </div>
-
-      {address && (
-        <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
-          <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Recent Swaps</h3>
-          {history.length === 0 ? (
-            <p style={{ fontSize: 13, color: "#8a8b9c", textAlign: "center" }}>No swaps yet.</p>
-          ) : (
-            history.map((tx, i) => (
-              <a
-                key={tx.hash + i}
-                href={`${EXPLORER_TX_BASE}${tx.hash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < history.length - 1 ? "1px solid #2a2b3a" : "none", textDecoration: "none", color: "inherit" }}
-              >
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>
-                    {tx.type === "ETH_TO_TOKEN" ? `ETH \u2192 ${token.symbol}` : `${token.symbol} \u2192 ETH`}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#8a8b9c" }}>
-                    {tx.amountIn} {tx.type === "ETH_TO_TOKEN" ? "ETH" : token.symbol} \u2192 {tx.amountOut} {tx.type === "ETH_TO_TOKEN" ? token.symbol : "ETH"}
-                  </div>
-                </div>
-                <span style={{ fontSize: 11, color: "#d7ff1f" }}>View \u2197</span>
-              </a>
-            ))
-          )}
-        </div>
-      )}
     </main>
   );
 }
