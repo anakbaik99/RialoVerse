@@ -148,16 +148,6 @@ export default function Home() {
         </nav>
 
         <div className="rv-nav-actions">
-          <button
-            className="rv-wallet"
-            onClick={() =>
-              isConnected ? openAccountModal?.() : openConnectModal?.()
-            }
-          >
-            {isConnected
-              ? `${address?.slice(0, 5)}...${address?.slice(-4)}`
-              : "Connect Wallet"}
-          </button>
 
           <button
             className="rv-menu"
@@ -276,7 +266,7 @@ export default function Home() {
         <div className="rv-section-top rv-reveal">
           <div>
             <div className="rv-section-label">02 / ECOSYSTEM</div>
-            <h2>BUILT TO BE EXPLORED.</h2>
+            <h2>BUILT TO BE <span>EXPLORED.</span></h2>
           </div>
 
           <p>
@@ -452,7 +442,7 @@ export default function Home() {
         <div className="rv-section-top rv-reveal">
           <div>
             <div className="rv-section-label">05 / GAMES</div>
-            <h2>PLAY THE UNIVERSE.</h2>
+            <h2>PLAY THE <span>UNIVERSE.</span></h2>
           </div>
 
           <p>

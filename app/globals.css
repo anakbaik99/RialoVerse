@@ -142,9 +142,11 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  font-family: var(--font-anton), sans-serif !important;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -305,8 +307,8 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 .rv-hero h1 {
   margin: 0;
   font-size: clamp(58px, 7vw, 100px);
-  line-height: .9;
-  letter-spacing: -4px;
+  line-height: 1.05;
+  letter-spacing: -1px;
   font-weight: 900;
 }
 
@@ -555,8 +557,8 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 .rv-comi h2,
 .rv-cta h2 {
   font-size: clamp(42px, 6vw, 75px);
-  line-height: .95;
-  letter-spacing: -3px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
   margin: 0;
 }
 
@@ -594,7 +596,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 .rv-section-top h2 {
   font-size: 38px;
   margin: 12px 0 0;
-  letter-spacing: -1px;
+  letter-spacing: 0px;
 }
 
 .rv-section-top > p {
@@ -1524,7 +1526,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 
   .rv-hero h1 {
     font-size: 55px;
-    letter-spacing: -2px;
+    letter-spacing: 0px;
   }
 
   .rv-hero-copy > p {
@@ -1611,7 +1613,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
   .rv-comi h2,
   .rv-cta h2 {
     font-size: 43px;
-    letter-spacing: -2px;
+    letter-spacing: 0px;
   }
 
   .rv-intro-content p {
@@ -1803,4 +1805,15 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 
 .rv-green {
   color: #d7ff1f !important;
+}
+
+.rv-comi a.rv-primary {
+  color: #090a04 !important;
+}
+.rv-comi a.rv-primary span {
+  color: #090a04 !important;
+}
+
+.rv-section-top h2 span {
+  color: var(--rv-neon);
 }
