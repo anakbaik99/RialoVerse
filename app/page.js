@@ -450,7 +450,7 @@ export default function Home() {
 
         <div className="rv-network rv-reveal">
           <div className="rv-network-center">
-            <strong>R</strong>
+            <img src="/logo.png" alt="RialoVerse" className="rv-network-logo" />
             <span>RIALOVERSE</span>
           </div>
 

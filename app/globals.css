@@ -808,7 +808,15 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 8px;
   box-shadow: 0 0 80px #d7ff1f0e;
+}
+
+.rv-network-logo {
+  width: 55%;
+  height: 55%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px #d7ff1f55);
 }
 
 .rv-network-center strong {
@@ -1622,8 +1630,9 @@ body {
     height: 110px;
   }
 
-  .rv-network-center strong {
-    font-size: 48px;
+  .rv-network-logo {
+    width: 50%;
+    height: 50%;
   }
 
   .rv-network-node {
