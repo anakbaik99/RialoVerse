@@ -1830,6 +1830,10 @@ body {
 
   /* HEADER MENU */
   .rv-mobile-header {
+    display: none !important;
+  }
+
+  .rv-mobile-header {
     width: 100%;
     height: 68px;
 
@@ -1898,11 +1902,11 @@ body {
   /* BLACK PANEL */
   .rv-mobile-panel {
     width: 100%;
-    min-height: calc(100dvh - 130px);
+    min-height: 0;
 
     box-sizing: border-box;
 
-    padding: 40px 30px 36px;
+    padding: 20px;
 
     display: flex;
     flex-direction: column;
@@ -1910,6 +1914,7 @@ body {
     background: #000;
 
     border: 1px solid #171b21;
+    border-radius: 12px;
   }
 
   /* MENU ITEMS */
