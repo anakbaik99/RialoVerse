@@ -149,6 +149,7 @@ function FeatureIcon({ name, size = 28 }) {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("ecosystem");
   const [activeFeature, setActiveFeature] = useState(0);
 
   const { address, isConnected } = useAccount();
@@ -190,6 +191,28 @@ export default function Home() {
     elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const sectionIds = ["ecosystem", "how", "games", "comi"];
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    const spyObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: 0 }
+    );
+
+    sections.forEach((el) => spyObserver.observe(el));
+
+    return () => spyObserver.disconnect();
   }, []);
 
   const scrollTo = (id) => {
@@ -245,19 +268,35 @@ export default function Home() {
             </div>
 
             <div className="rv-mobile-panel">
-              <a href="#ecosystem" onClick={() => setMenuOpen(false)}>
+              <a
+                href="#ecosystem"
+                className={activeSection === "ecosystem" ? "rv-mobile-active" : ""}
+                onClick={() => setMenuOpen(false)}
+              >
                 ECOSYSTEM
               </a>
 
-              <a href="#how" onClick={() => setMenuOpen(false)}>
+              <a
+                href="#how"
+                className={activeSection === "how" ? "rv-mobile-active" : ""}
+                onClick={() => setMenuOpen(false)}
+              >
                 HOW IT WORKS
               </a>
 
-              <a href="#games" onClick={() => setMenuOpen(false)}>
+              <a
+                href="#games"
+                className={activeSection === "games" ? "rv-mobile-active" : ""}
+                onClick={() => setMenuOpen(false)}
+              >
                 GAMES
               </a>
 
-              <a href="#comi" onClick={() => setMenuOpen(false)}>
+              <a
+                href="#comi"
+                className={activeSection === "comi" ? "rv-mobile-active" : ""}
+                onClick={() => setMenuOpen(false)}
+              >
                 COMI
               </a>
 

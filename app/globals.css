@@ -1970,7 +1970,7 @@ body {
     text-decoration: none;
   }
 
-  .rv-mobile-panel > a:first-child {
+  .rv-mobile-panel > a.rv-mobile-active {
     color: #cfff00 !important;
   }
 
