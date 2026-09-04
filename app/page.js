@@ -635,7 +635,7 @@ export default function Home() {
           </div>
 
           <div className="rv-chat-body">
-            <div className="rv-bot-avatar">✦</div>
+            <div className="rv-bot-avatar"><img src="/comi-logo.png" alt="COMI" className="rv-bot-avatar-img" /></div>
 
             <div className="rv-message">
               <span className="rv-typing">

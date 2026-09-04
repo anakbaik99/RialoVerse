@@ -19,7 +19,7 @@ function parseAction(text) {
 export default function ComiPage() {
   const router = useRouter();
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm COMI 🤖, your RialoVerse assistant. Ask me about swapping, the faucet, or anything else!" },
+    { role: "assistant", content: "Hi! I'm COMI, your RialoVerse assistant. Ask me about swapping, the faucet, or anything else!" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,7 +73,7 @@ export default function ComiPage() {
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#111218", borderBottom: "2px solid #d7ff1f" }}>
         <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}><span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span></a>
-        <h2 style={{ margin: 0, fontSize: 18 }}>🤖 COMI</h2>
+        <h2 style={{ margin: 0, fontSize: 18, display: "flex", alignItems: "center", gap: 8 }}><img src="/comi-logo.png" alt="COMI" style={{ width: 28, height: 28, objectFit: "contain" }} /> COMI</h2>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>

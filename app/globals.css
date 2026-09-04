@@ -1123,6 +1123,13 @@ body {
   color: var(--rv-neon);
   margin-bottom: 18px;
   animation: rvCore 3s infinite;
+  overflow: hidden;
+}
+
+.rv-bot-avatar-img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
 }
 
 .rv-message {
