@@ -1486,16 +1486,18 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
   .rv-nav-links {
     display: none;
     position: fixed;
-    top: 65px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 30px 25px 20px;
-    background: #080a0e;
+    top: 75px;
+    left: 15px;
+    right: 15px;
+    padding: 20px;
+    background: #0d0f16;
+    border: 1px solid #272b34;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 8px;
+    gap: 4px;
   }
 
   .rv-nav-links.rv-nav-open {
