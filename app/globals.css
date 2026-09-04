@@ -85,12 +85,8 @@ body {
 .rv-brand-mark {
   width: 34px;
   height: 34px;
-  display: grid;
-  place-items: center;
-  background: var(--rv-neon);
-  color: #080900;
-  font-size: 25px;
-  font-weight: 1000;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .rv-nav-links {
@@ -1876,15 +1872,8 @@ body {
   .rv-mobile-mark {
     width: 42px;
     height: 42px;
-
-    display: grid;
-    place-items: center;
-
-    background: #cfff00;
-    color: #050505;
-
-    font-size: 22px;
-    font-weight: 800;
+    object-fit: contain;
+    border-radius: 6px;
   }
 
   .rv-mobile-brand > span:last-child {

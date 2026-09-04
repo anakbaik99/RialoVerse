@@ -136,7 +136,7 @@ export default function Home() {
       {/* NAVBAR */}
       <header className="rv-nav">
         <a href="/" className="rv-brand">
-          <span className="rv-brand-mark">R</span>
+          <img src="/logo.png" alt="RialoVerse" className="rv-brand-mark" />
           <span>RIALO<span>VERSE</span></span>
         </a>
 
@@ -163,7 +163,7 @@ export default function Home() {
           <div className="rv-mobile-menu">
             <div className="rv-mobile-header">
               <a href="/" className="rv-mobile-brand">
-                <span className="rv-mobile-mark">R</span>
+                <img src="/logo.png" alt="RialoVerse" className="rv-mobile-mark" />
                 <span>RIALO<span>VERSE</span></span>
               </a>
 
@@ -698,7 +698,7 @@ export default function Home() {
       <footer className="rv-footer">
         <div className="rv-footer-brand">
           <a href="/" className="rv-brand">
-            <span className="rv-brand-mark">R</span>
+            <img src="/logo.png" alt="RialoVerse" className="rv-brand-mark" />
             <span>RIALO<span>VERSE</span></span>
           </a>
 
