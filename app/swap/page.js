@@ -341,7 +341,7 @@ function SwapContent() {
 
       <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}><span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span></a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
         </div>
 

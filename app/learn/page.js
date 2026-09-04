@@ -61,7 +61,7 @@ export default function LearnPage() {
     <main style={{ minHeight: "100vh", background: "#0a0a0a", padding: "24px 16px", boxSizing: "border-box" }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}><span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span></a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Learn</h2>
         </div>
 

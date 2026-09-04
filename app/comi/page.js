@@ -72,7 +72,7 @@ export default function ComiPage() {
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", background: "#111218", borderBottom: "2px solid #d7ff1f" }}>
-        <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
+        <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}><span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span></a>
         <h2 style={{ margin: 0, fontSize: 18 }}>🤖 COMI</h2>
       </div>
 

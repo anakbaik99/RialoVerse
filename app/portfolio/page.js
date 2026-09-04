@@ -136,8 +136,8 @@ export default function PortfolioPage() {
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 16, background: "#0a0a0a", boxSizing: "border-box", gap: 16 }}>
       <div style={{ width: "100%", maxWidth: 480, marginTop: 8 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>
-            ← RialoVerse
+          <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}>
+            <span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span>
           </a>
           <h2 style={{ margin: 0, fontSize: 20, color: "#fff" }}>Portfolio</h2>
         </div>
