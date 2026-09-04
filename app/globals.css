@@ -1498,6 +1498,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
 
   .rv-nav-links.rv-nav-open {
     display: flex;
+    z-index: 999;
   }
 
   .rv-nav-links a {
