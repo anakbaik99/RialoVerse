@@ -1782,6 +1782,7 @@ body {
     position: relative;
     z-index: 10006;
     display: flex !important;
+    background: red !important;
     width: 44px;
     height: 44px;
     padding: 10px;
