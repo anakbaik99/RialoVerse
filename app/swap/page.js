@@ -5,20 +5,24 @@ import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
 import { useSearchParams } from "next/navigation";
 import { parseEther, formatEther, parseUnits, formatUnits, decodeEventLog } from "viem";
 
-const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";
-const SWAP_ADDRESS = "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD";
-
 const TOKEN_ABI = [
   { name: "approve", type: "function", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ type: "bool" }] },
   { name: "allowance", type: "function", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "uint256" }] },
   { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
 ];
 
-const SWAP_ABI = [
+const LEGACY_SWAP_ABI = [
   { name: "getEthReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "getTokenReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "swapETHForToken", type: "function", stateMutability: "payable", inputs: [{ name: "minTokenOut", type: "uint256" }], outputs: [] },
   { name: "swapTokenForETH", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenIn", type: "uint256" }, { name: "minEthOut", type: "uint256" }], outputs: [] },
+];
+
+const GENERIC_SWAP_ABI = [
+  { name: "getEthReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "getTokenReserve", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "swapEthForToken", type: "function", stateMutability: "payable", inputs: [{ name: "minTokenOut", type: "uint256" }], outputs: [] },
+  { name: "swapTokenForEth", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenAmount", type: "uint256" }, { name: "minEthOut", type: "uint256" }], outputs: [] },
 ];
 
 const SWAP_ETH_EVENT = {
@@ -37,12 +41,65 @@ const SWAP_TOKEN_EVENT = {
     { name: "ethOut", type: "uint256", indexed: false },
   ],
 };
-const EVENTS_ABI = [SWAP_ETH_EVENT, SWAP_TOKEN_EVENT];
+const GENERIC_SWAP_EVENT = {
+  type: "event", name: "Swap",
+  inputs: [
+    { name: "user", type: "address", indexed: true },
+    { name: "ethToToken", type: "bool", indexed: false },
+    { name: "amountIn", type: "uint256", indexed: false },
+    { name: "amountOut", type: "uint256", indexed: false },
+  ],
+};
+
+const TOKENS = {
+  RIALO: {
+    symbol: "RIALO",
+    decimals: 18,
+    tokenAddress: "0xEf601624E09126E369887D2845B68F4f9e968831",
+    swapAddress: "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD",
+    swapAbi: LEGACY_SWAP_ABI,
+    ethFnName: "swapETHForToken",
+    tokenFnName: "swapTokenForETH",
+    kind: "legacy",
+    iconLetter: "R",
+    iconBg: "#d7ff1f",
+    iconColor: "#0a0a0a",
+  },
+  USDC: {
+    symbol: "USDC",
+    decimals: 6,
+    tokenAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    swapAddress: "0x4168105b335d1ae53f52fB6dAf6F35aa4816036b",
+    swapAbi: GENERIC_SWAP_ABI,
+    ethFnName: "swapEthForToken",
+    tokenFnName: "swapTokenForEth",
+    kind: "generic",
+    iconLetter: "$",
+    iconBg: "#2775CA",
+    iconColor: "#fff",
+  },
+};
 
 const GAS_BUFFER = parseEther("0.0005");
 const SLIPPAGE_OPTIONS = [50, 100, 300];
 const EXPLORER_TX_BASE = "https://eth-sepolia.blockscout.com/tx/";
 const HISTORY_STORAGE_PREFIX = "rialo_swap_history_";
+
+function TokenIcon({ token, size = 20 }) {
+  if (token === "ETH") {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "#fff", color: "#0a0a0a", fontSize: size * 0.55, fontWeight: 800, flexShrink: 0 }}>
+        \u039e
+      </span>
+    );
+  }
+  const cfg = TOKENS[token];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: cfg.iconBg, color: cfg.iconColor, fontSize: size * 0.5, fontWeight: 800, flexShrink: 0 }}>
+      {cfg.iconLetter}
+    </span>
+  );
+}
 
 function formatNice(numStr, maxDecimals = 6) {
   const n = Number(numStr);
@@ -60,24 +117,34 @@ function sanitizeDecimalInput(raw) {
   return v;
 }
 
-function decodeSwapFromReceipt(receipt) {
+function decodeSwapFromReceipt(receipt, token) {
   if (!receipt || !receipt.logs) return null;
+  const abi = token.kind === "legacy" ? [SWAP_ETH_EVENT, SWAP_TOKEN_EVENT] : [GENERIC_SWAP_EVENT];
   for (const log of receipt.logs) {
     try {
-      const decoded = decodeEventLog({ abi: EVENTS_ABI, data: log.data, topics: log.topics });
+      const decoded = decodeEventLog({ abi, data: log.data, topics: log.topics });
       if (decoded.eventName === "SwapETHForToken") {
         return {
-          type: "ETH_TO_RIALO",
+          type: "ETH_TO_TOKEN",
           amountIn: formatNice(formatEther(decoded.args.ethIn), 5),
-          amountOut: formatNice(formatUnits(decoded.args.tokenOut, 18), 2),
+          amountOut: formatNice(formatUnits(decoded.args.tokenOut, token.decimals), 2),
           hash: receipt.transactionHash,
         };
       }
       if (decoded.eventName === "SwapTokenForETH") {
         return {
-          type: "RIALO_TO_ETH",
-          amountIn: formatNice(formatUnits(decoded.args.tokenIn, 18), 2),
+          type: "TOKEN_TO_ETH",
+          amountIn: formatNice(formatUnits(decoded.args.tokenIn, token.decimals), 2),
           amountOut: formatNice(formatEther(decoded.args.ethOut), 5),
+          hash: receipt.transactionHash,
+        };
+      }
+      if (decoded.eventName === "Swap") {
+        const ethToToken = decoded.args.ethToToken;
+        return {
+          type: ethToToken ? "ETH_TO_TOKEN" : "TOKEN_TO_ETH",
+          amountIn: formatNice(ethToToken ? formatEther(decoded.args.amountIn) : formatUnits(decoded.args.amountIn, token.decimals), ethToToken ? 5 : 2),
+          amountOut: formatNice(ethToToken ? formatUnits(decoded.args.amountOut, token.decimals) : formatEther(decoded.args.amountOut), ethToToken ? 2 : 5),
           hash: receipt.transactionHash,
         };
       }
@@ -108,15 +175,18 @@ function SwapContent() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
-  const [direction, setDirection] = useState("ETH_TO_RIALO");
+  const [tokenKey, setTokenKey] = useState("RIALO");
+  const token = TOKENS[tokenKey];
+  const [direction, setDirection] = useState("ETH_TO_TOKEN");
   const [amountIn, setAmountIn] = useState("");
 
   useEffect(() => {
     const urlDirection = searchParams.get("direction");
     const urlAmount = searchParams.get("amount");
-    if (urlDirection === "ETH_TO_RIALO" || urlDirection === "RIALO_TO_ETH") {
-      setDirection(urlDirection);
-    }
+    const urlToken = searchParams.get("token");
+    if (urlToken && TOKENS[urlToken]) setTokenKey(urlToken);
+    if (urlDirection === "ETH_TO_RIALO" || urlDirection === "ETH_TO_TOKEN") setDirection("ETH_TO_TOKEN");
+    if (urlDirection === "RIALO_TO_ETH" || urlDirection === "TOKEN_TO_ETH") setDirection("TOKEN_TO_ETH");
     if (urlAmount && !isNaN(Number(urlAmount)) && Number(urlAmount) > 0) {
       setAmountIn(urlAmount);
     }
@@ -125,7 +195,7 @@ function SwapContent() {
   const [errorMsg, setErrorMsg] = useState("");
   const [history, setHistory] = useState([]);
 
-  const storageKey = address ? HISTORY_STORAGE_PREFIX + address.toLowerCase() : null;
+  const storageKey = address ? `${HISTORY_STORAGE_PREFIX}${address.toLowerCase()}_${token.symbol}` : null;
 
   useEffect(() => {
     if (!storageKey) return;
@@ -137,65 +207,73 @@ function SwapContent() {
     }
   }, [storageKey]);
 
-  const { data: ethReserve, refetch: refetchEthReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getEthReserve" });
-  const { data: tokenReserve, refetch: refetchTokenReserve } = useReadContract({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "getTokenReserve" });
+  function selectToken(key) {
+    if (key === tokenKey) return;
+    setTokenKey(key);
+    setAmountIn("");
+    setErrorMsg("");
+    setDirection("ETH_TO_TOKEN");
+  }
+
+  const { data: ethReserve, refetch: refetchEthReserve } = useReadContract({ address: token.swapAddress, abi: token.swapAbi, functionName: "getEthReserve" });
+  const { data: tokenReserve, refetch: refetchTokenReserve } = useReadContract({ address: token.swapAddress, abi: token.swapAbi, functionName: "getTokenReserve" });
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: TOKEN_ADDRESS,
+    address: token.tokenAddress,
     abi: TOKEN_ABI,
     functionName: "allowance",
-    args: address ? [address, SWAP_ADDRESS] : undefined,
+    args: address ? [address, token.swapAddress] : undefined,
     query: { enabled: !!address },
   });
 
   const { data: ethBalance, refetch: refetchEthBalance } = useBalance({ address, query: { enabled: !!address } });
-  const { data: rialoBalanceRaw, refetch: refetchRialoBalance } = useReadContract({
-    address: TOKEN_ADDRESS,
+  const { data: tokenBalanceRaw, refetch: refetchTokenBalance } = useReadContract({
+    address: token.tokenAddress,
     abi: TOKEN_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   });
 
-  const currentBalanceWei = direction === "ETH_TO_RIALO" ? (ethBalance?.value ?? 0n) : (rialoBalanceRaw ?? 0n);
-  const currentBalanceLabel = direction === "ETH_TO_RIALO"
+  const currentBalanceWei = direction === "ETH_TO_TOKEN" ? (ethBalance?.value ?? 0n) : (tokenBalanceRaw ?? 0n);
+  const currentBalanceLabel = direction === "ETH_TO_TOKEN"
     ? (ethBalance ? formatNice(formatEther(ethBalance.value), 5) : "0")
-    : (rialoBalanceRaw !== undefined ? formatNice(formatUnits(rialoBalanceRaw, 18), 2) : "0");
+    : (tokenBalanceRaw !== undefined ? formatNice(formatUnits(tokenBalanceRaw, token.decimals), 2) : "0");
 
   function setPercentage(pct) {
     if (!address) return;
     let base = currentBalanceWei;
-    if (direction === "ETH_TO_RIALO" && pct === 100) {
+    if (direction === "ETH_TO_TOKEN" && pct === 100) {
       base = base > GAS_BUFFER ? base - GAS_BUFFER : 0n;
     }
     const amount = (base * BigInt(pct)) / 100n;
-    const formatted = direction === "ETH_TO_RIALO" ? formatEther(amount) : formatUnits(amount, 18);
+    const formatted = direction === "ETH_TO_TOKEN" ? formatEther(amount) : formatUnits(amount, token.decimals);
     setAmountIn(formatted);
   }
 
   const estimatedOut = useMemo(() => {
     if (!amountIn || !ethReserve || !tokenReserve) return "0";
     try {
-      const amountInWei = direction === "ETH_TO_RIALO" ? parseEther(amountIn) : parseUnits(amountIn, 18);
-      const reserveIn = direction === "ETH_TO_RIALO" ? ethReserve : tokenReserve;
-      const reserveOut = direction === "ETH_TO_RIALO" ? tokenReserve : ethReserve;
+      const amountInWei = direction === "ETH_TO_TOKEN" ? parseEther(amountIn) : parseUnits(amountIn, token.decimals);
+      const reserveIn = direction === "ETH_TO_TOKEN" ? ethReserve : tokenReserve;
+      const reserveOut = direction === "ETH_TO_TOKEN" ? tokenReserve : ethReserve;
       const amountInWithFee = amountInWei * 9970n;
       const numerator = amountInWithFee * reserveOut;
       const denominator = reserveIn * 10000n + amountInWithFee;
       const out = numerator / denominator;
-      return direction === "ETH_TO_RIALO" ? formatUnits(out, 18) : formatEther(out);
+      return direction === "ETH_TO_TOKEN" ? formatUnits(out, token.decimals) : formatEther(out);
     } catch {
       return "0";
     }
-  }, [amountIn, ethReserve, tokenReserve, direction]);
+  }, [amountIn, ethReserve, tokenReserve, direction, token]);
 
   const priceImpact = useMemo(() => {
     if (!amountIn || !ethReserve || !tokenReserve || Number(amountIn) <= 0) return 0;
     try {
-      const amountInWei = direction === "ETH_TO_RIALO" ? parseEther(amountIn) : parseUnits(amountIn, 18);
-      const reserveIn = direction === "ETH_TO_RIALO" ? ethReserve : tokenReserve;
-      const reserveOut = direction === "ETH_TO_RIALO" ? tokenReserve : ethReserve;
+      const amountInWei = direction === "ETH_TO_TOKEN" ? parseEther(amountIn) : parseUnits(amountIn, token.decimals);
+      const reserveIn = direction === "ETH_TO_TOKEN" ? ethReserve : tokenReserve;
+      const reserveOut = direction === "ETH_TO_TOKEN" ? tokenReserve : ethReserve;
       const noImpactOut = (amountInWei * reserveOut) / reserveIn;
-      const actualOutWei = direction === "ETH_TO_RIALO" ? parseUnits(estimatedOut || "0", 18) : parseEther(estimatedOut || "0");
+      const actualOutWei = direction === "ETH_TO_TOKEN" ? parseUnits(estimatedOut || "0", token.decimals) : parseEther(estimatedOut || "0");
       if (noImpactOut === 0n) return 0;
       const diff = noImpactOut - actualOutWei;
       const impactBps = (diff * 10000n) / noImpactOut;
@@ -203,7 +281,7 @@ function SwapContent() {
     } catch {
       return 0;
     }
-  }, [amountIn, ethReserve, tokenReserve, direction, estimatedOut]);
+  }, [amountIn, ethReserve, tokenReserve, direction, estimatedOut, token]);
 
   const { writeContract: approve, data: approveHash, isPending: approving, error: approveError } = useWriteContract();
   const { writeContract: swap, data: swapHash, isPending: swapping, error: swapWriteError } = useWriteContract();
@@ -239,12 +317,12 @@ function SwapContent() {
       refetchEthReserve();
       refetchTokenReserve();
       refetchEthBalance();
-      refetchRialoBalance();
+      refetchTokenBalance();
       refetchAllowance();
       setAmountIn("");
       setErrorMsg("");
 
-      const entry = decodeSwapFromReceipt(swapReceipt);
+      const entry = decodeSwapFromReceipt(swapReceipt, token);
       if (entry) {
         setHistory((prev) => {
           const exists = prev.some((h) => h.hash === entry.hash);
@@ -257,12 +335,12 @@ function SwapContent() {
   }, [swapSuccess, swapReceipt, storageKey]);
 
   const amountInWeiForCheck = (() => {
-    try { return amountIn ? parseUnits(amountIn, 18) : 0n; } catch { return 0n; }
+    try { return amountIn ? parseUnits(amountIn, token.decimals) : 0n; } catch { return 0n; }
   })();
-  const needsApproval = direction === "RIALO_TO_ETH" && amountIn && allowance !== undefined && amountInWeiForCheck > allowance;
+  const needsApproval = direction === "TOKEN_TO_ETH" && amountIn && allowance !== undefined && amountInWeiForCheck > allowance;
   const insufficientBalance = amountIn && (() => {
     try {
-      const wei = direction === "ETH_TO_RIALO" ? parseEther(amountIn) : parseUnits(amountIn, 18);
+      const wei = direction === "ETH_TO_TOKEN" ? parseEther(amountIn) : parseUnits(amountIn, token.decimals);
       return wei > currentBalanceWei;
     } catch { return false; }
   })();
@@ -270,10 +348,10 @@ function SwapContent() {
   function handleApprove() {
     setErrorMsg("");
     approve({
-      address: TOKEN_ADDRESS,
+      address: token.tokenAddress,
       abi: TOKEN_ABI,
       functionName: "approve",
-      args: [SWAP_ADDRESS, parseUnits("1000000", 18)],
+      args: [token.swapAddress, parseUnits("1000000", token.decimals)],
     });
   }
 
@@ -281,14 +359,14 @@ function SwapContent() {
     if (!amountIn || Number(amountIn) <= 0) return;
     setErrorMsg("");
     try {
-      if (direction === "ETH_TO_RIALO") {
+      if (direction === "ETH_TO_TOKEN") {
         const amountInWei = parseEther(amountIn);
-        const minOut = (parseUnits(estimatedOut || "0", 18) * (10000n - BigInt(slippageBps))) / 10000n;
-        swap({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "swapETHForToken", args: [minOut], value: amountInWei });
+        const minOut = (parseUnits(estimatedOut || "0", token.decimals) * (10000n - BigInt(slippageBps))) / 10000n;
+        swap({ address: token.swapAddress, abi: token.swapAbi, functionName: token.ethFnName, args: [minOut], value: amountInWei });
       } else {
-        const amountInWei = parseUnits(amountIn, 18);
+        const amountInWei = parseUnits(amountIn, token.decimals);
         const minOut = (parseEther(estimatedOut || "0") * (10000n - BigInt(slippageBps))) / 10000n;
-        swap({ address: SWAP_ADDRESS, abi: SWAP_ABI, functionName: "swapTokenForETH", args: [amountInWei, minOut] });
+        swap({ address: token.swapAddress, abi: token.swapAbi, functionName: token.tokenFnName, args: [amountInWei, minOut] });
       }
     } catch (e) {
       setErrorMsg("Invalid amount.");
@@ -296,13 +374,15 @@ function SwapContent() {
   }
 
   function flipDirection() {
-    setDirection(direction === "ETH_TO_RIALO" ? "RIALO_TO_ETH" : "ETH_TO_RIALO");
+    setDirection(direction === "ETH_TO_TOKEN" ? "TOKEN_TO_ETH" : "ETH_TO_TOKEN");
     setAmountIn("");
     setErrorMsg("");
   }
 
   const buttonDisabled = !amountIn || Number(amountIn) <= 0 || insufficientBalance || swapBusy;
   const highImpact = priceImpact > 5;
+  const payLabel = direction === "ETH_TO_TOKEN" ? "ETH" : token.symbol;
+  const receiveLabel = direction === "ETH_TO_TOKEN" ? token.symbol : "ETH";
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, background: "#0a0a0a", boxSizing: "border-box", gap: 16 }}>
@@ -313,8 +393,26 @@ function SwapContent() {
 
       <div style={{ width: "100%", maxWidth: 420, background: "#111218", borderRadius: 0, padding: 20, border: "2px solid #d7ff1f", boxShadow: "none", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>← RialoVerse</a>
+          <a href="/" style={{ textDecoration: "none", color: "#d7ff1f", fontWeight: 700 }}>\u2190 RialoVerse</a>
           <h2 style={{ margin: 0, fontSize: 20 }}>Swap</h2>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          {Object.keys(TOKENS).map((key) => (
+            <button
+              key={key}
+              onClick={() => selectToken(key)}
+              style={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "8px 0", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                border: tokenKey === key ? "2px solid #d7ff1f" : "2px solid #2a2b3a",
+                background: tokenKey === key ? "#1a1b26" : "#0a0a0a",
+                color: tokenKey === key ? "#d7ff1f" : "#8a8b9c",
+              }}
+            >
+              <TokenIcon token={key} size={16} /> {key}
+            </button>
+          ))}
         </div>
 
         {isConnected && (
@@ -347,7 +445,7 @@ function SwapContent() {
             <label style={{ fontSize: 12, color: "#8a8b9c" }}>You pay</label>
             {address && (
               <span style={{ fontSize: 12, color: "#8a8b9c" }}>
-                Balance: {currentBalanceLabel} {direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}
+                Balance: {currentBalanceLabel} {payLabel}
               </span>
             )}
           </div>
@@ -358,9 +456,11 @@ function SwapContent() {
               placeholder="0.0"
               value={amountIn}
               onChange={(e) => setAmountIn(sanitizeDecimalInput(e.target.value))}
-              style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none" }}
+              style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none", color: "#fff" }}
             />
-            <span style={{ fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>{direction === "ETH_TO_RIALO" ? "ETH" : "RIALO"}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>
+              <TokenIcon token={payLabel} /> {payLabel}
+            </span>
           </div>
           {address && (
             <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
@@ -378,7 +478,7 @@ function SwapContent() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "4px 0" }}>
-          <button onClick={flipDirection} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>⇅</button>
+          <button onClick={flipDirection} style={{ background: "#1a1b26", borderRadius: 0, border: "2px solid #d7ff1f", color: "#d7ff1f", fontSize: 18, width: 36, height: 36, cursor: "pointer" }}>\u21c5</button>
         </div>
 
         <div style={{ background: "#15161f", borderRadius: 0, padding: 14, marginBottom: 10, boxSizing: "border-box" }}>
@@ -387,14 +487,16 @@ function SwapContent() {
             <div style={{ flex: "1 1 0%", minWidth: 0, fontSize: 22, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {formatNice(estimatedOut)}
             </div>
-            <span style={{ fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>{direction === "ETH_TO_RIALO" ? "RIALO" : "ETH"}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}>
+              <TokenIcon token={receiveLabel} /> {receiveLabel}
+            </span>
           </div>
         </div>
 
         {amountIn && Number(amountIn) > 0 && (
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: highImpact ? "#dc2626" : "#888", marginBottom: 14, padding: "0 2px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: highImpact ? "#ff4d4d" : "#8a8b9c", marginBottom: 14, padding: "0 2px" }}>
             <span>Price impact</span>
-            <span style={{ fontWeight: highImpact ? 700 : 400 }}>{priceImpact.toFixed(2)}%{highImpact ? " ⚠️ High" : ""}</span>
+            <span style={{ fontWeight: highImpact ? 700 : 400 }}>{priceImpact.toFixed(2)}%{highImpact ? " \u26a0\ufe0f High" : ""}</span>
           </div>
         )}
 
@@ -408,7 +510,7 @@ function SwapContent() {
           </button>
         ) : needsApproval ? (
           <button onClick={handleApprove} disabled={approveBusy} className={approveBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#f59e0b", color: "#fff", border: "none", fontWeight: 700, fontSize: 16 }}>
-            {approveBusy ? `Approving${approveDots}` : "Approve RIALO"}
+            {approveBusy ? `Approving${approveDots}` : `Approve ${token.symbol}`}
           </button>
         ) : (
           <button onClick={handleSwap} disabled={buttonDisabled} className={swapBusy ? "rialo-pulsing" : ""} style={{ width: "100%", padding: 14, borderRadius: 12, background: buttonDisabled ? "#333" : "#d7ff1f", color: buttonDisabled ? "#888" : "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16, cursor: buttonDisabled ? "not-allowed" : "pointer" }}>
@@ -417,7 +519,7 @@ function SwapContent() {
         )}
 
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13 }}>{errorMsg}</p>}
-        {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! ✅</p>}
+        {swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! \u2705</p>}
         {approveSuccess && !swapSuccess && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Approve successful, now click Swap.</p>}
       </div>
 
@@ -433,17 +535,17 @@ function SwapContent() {
                 href={`${EXPLORER_TX_BASE}${tx.hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < history.length - 1 ? "1px solid #f0f0f0" : "none", textDecoration: "none", color: "inherit" }}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < history.length - 1 ? "1px solid #2a2b3a" : "none", textDecoration: "none", color: "inherit" }}
               >
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>
-                    {tx.type === "ETH_TO_RIALO" ? "ETH → RIALO" : "RIALO → ETH"}
+                    {tx.type === "ETH_TO_TOKEN" ? `ETH \u2192 ${token.symbol}` : `${token.symbol} \u2192 ETH`}
                   </div>
                   <div style={{ fontSize: 11, color: "#8a8b9c" }}>
-                    {tx.amountIn} {tx.type === "ETH_TO_RIALO" ? "ETH" : "RIALO"} → {tx.amountOut} {tx.type === "ETH_TO_RIALO" ? "RIALO" : "ETH"}
+                    {tx.amountIn} {tx.type === "ETH_TO_TOKEN" ? "ETH" : token.symbol} \u2192 {tx.amountOut} {tx.type === "ETH_TO_TOKEN" ? token.symbol : "ETH"}
                   </div>
                 </div>
-                <span style={{ fontSize: 11, color: "#d7ff1f" }}>View ↗</span>
+                <span style={{ fontSize: 11, color: "#d7ff1f" }}>View \u2197</span>
               </a>
             ))
           )}
@@ -455,7 +557,7 @@ function SwapContent() {
 
 export default function SwapPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#fff" }}>Loading...</div>}>
       <SwapContent />
     </Suspense>
   );
