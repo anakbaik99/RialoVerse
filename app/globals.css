@@ -133,6 +133,7 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
   border-bottom: 1px solid #1d2029;
   background: #07080ced;
   backdrop-filter: blur(18px);
+  position: relative;
   position: sticky;
   top: 0;
   z-index: 100;
