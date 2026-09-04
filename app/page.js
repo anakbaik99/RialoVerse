@@ -148,9 +148,8 @@ export default function Home() {
         </nav>
 
         <div className="rv-nav-actions">
-
           <button
-            className="rv-menu"
+            className={`rv-menu ${menuOpen ? "rv-menu-open" : ""}`}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"
           >
@@ -158,6 +157,49 @@ export default function Home() {
             <span />
             <span />
           </button>
+        </div>
+
+        <div className={`rv-mobile-menu ${menuOpen ? "rv-mobile-open" : ""}`}>
+          <div className="rv-mobile-header">
+            <a href="/" className="rv-brand">
+              <span className="rv-brand-mark">R</span>
+              <span>RIALO<span>VERSE</span></span>
+            </a>
+
+            <button
+              className="rv-mobile-close"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="rv-mobile-panel">
+            <a href="#ecosystem" onClick={() => setMenuOpen(false)}>
+              ECOSYSTEM
+            </a>
+
+            <a href="#how" onClick={() => setMenuOpen(false)}>
+              HOW IT WORKS
+            </a>
+
+            <a href="#games" onClick={() => setMenuOpen(false)}>
+              GAMES
+            </a>
+
+            <a href="#comi" onClick={() => setMenuOpen(false)}>
+              COMI
+            </a>
+
+            <a
+              href="/swap"
+              className="rv-mobile-launch"
+              onClick={() => setMenuOpen(false)}
+            >
+              <span>🚀</span> Launch App
+            </a>
+          </div>
         </div>
       </header>
 
