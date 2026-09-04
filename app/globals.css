@@ -1797,40 +1797,34 @@ body {
     display: block;
   }
 
-  /* ketika menu terbuka, sembunyikan logo/hamburger ASLI */
-  .rv-nav:has(.rv-mobile-menu) > .rv-brand,
-  .rv-nav:has(.rv-mobile-menu) > .rv-nav-actions {
-    visibility: hidden !important;
-  }
-
-  /* FULL SCREEN MENU */
+  /* DROPDOWN MENU */
   .rv-mobile-menu {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100dvh !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
 
     box-sizing: border-box;
-
-    padding: 22px 30px 30px !important;
+    padding: 16px !important;
 
     background: #030507 !important;
+    z-index: 9999 !important;
 
-    z-index: 99999 !important;
+    overflow-y: visible;
 
-    overflow-y: auto;
-
-    animation: rvMenuIn .25s ease-out;
+    animation: rvMenuIn .2s ease-out;
   }
 
   @keyframes rvMenuIn {
     from {
       opacity: 0;
-      transform: translateX(100%);
+      transform: translateY(-8px);
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: translateY(0);
     }
   }
 
