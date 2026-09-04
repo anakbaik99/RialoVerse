@@ -2009,3 +2009,219 @@ h1,h2,h3,.brand b{font-family:var(--font-anton),var(--font-space-grotesk),sans-s
     overflow: hidden;
   }
 }
+
+/* =====================================================
+   FINAL MOBILE DRAWER
+===================================================== */
+
+@media (max-width: 800px) {
+
+  /* navbar normal */
+  .rv-nav {
+    position: relative;
+    z-index: 10001;
+  }
+
+  /* hide desktop links */
+  .rv-nav-links {
+    display: none !important;
+  }
+
+  /* hamburger */
+  .rv-nav-actions {
+    position: relative;
+    z-index: 10005;
+  }
+
+  .rv-menu {
+    position: relative;
+    z-index: 10006;
+    display: flex !important;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .rv-menu span {
+    width: 20px;
+    height: 2px;
+    display: block;
+  }
+
+  /* ketika menu terbuka, sembunyikan logo/hamburger ASLI */
+  .rv-nav:has(.rv-mobile-menu) > .rv-brand,
+  .rv-nav:has(.rv-mobile-menu) > .rv-nav-actions {
+    visibility: hidden !important;
+  }
+
+  /* FULL SCREEN MENU */
+  .rv-mobile-menu {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+
+    box-sizing: border-box;
+
+    padding: 22px 30px 30px !important;
+
+    background: #030507 !important;
+
+    z-index: 99999 !important;
+
+    overflow-y: auto;
+
+    animation: rvMenuIn .25s ease-out;
+  }
+
+  @keyframes rvMenuIn {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* HEADER MENU */
+  .rv-mobile-header {
+    width: 100%;
+    height: 68px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 28px;
+  }
+
+  /* LOGO DI DALAM MENU */
+  .rv-mobile-brand {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+
+    color: #f2f3f0 !important;
+    text-decoration: none;
+  }
+
+  .rv-mobile-mark {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    background: #cfff00;
+    color: #050505;
+
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .rv-mobile-brand > span:last-child {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+
+  .rv-mobile-brand > span:last-child span {
+    color: #cfff00;
+  }
+
+  /* X */
+  .rv-mobile-close {
+    width: 68px;
+    height: 68px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid #1b2027;
+    border-radius: 16px;
+
+    background: #080b0e;
+    color: #777e89;
+
+    font-size: 42px;
+    font-weight: 200;
+    line-height: 1;
+
+    cursor: pointer;
+  }
+
+  /* BLACK PANEL */
+  .rv-mobile-panel {
+    width: 100%;
+    min-height: calc(100dvh - 130px);
+
+    box-sizing: border-box;
+
+    padding: 40px 30px 36px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #000;
+
+    border: 1px solid #171b21;
+  }
+
+  /* MENU ITEMS */
+  .rv-mobile-panel > a:not(.rv-mobile-launch) {
+    display: block;
+
+    padding: 0 0 34px;
+    margin-bottom: 28px;
+
+    border-bottom: 1px solid #20242a;
+
+    color: #777d89 !important;
+
+    font-size: 22px;
+    letter-spacing: 1px;
+
+    text-decoration: none;
+  }
+
+  .rv-mobile-panel > a:first-child {
+    color: #cfff00 !important;
+  }
+
+  /* LAUNCH */
+  .rv-mobile-panel .rv-mobile-launch {
+    width: 100%;
+    height: 82px;
+
+    margin-top: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    border-radius: 42px;
+
+    background: #e1e6f0 !important;
+    color: #172238 !important;
+
+    font-size: 21px;
+    font-weight: 700;
+
+    text-decoration: none;
+  }
+
+  .rv-mobile-launch span {
+    font-size: 20px;
+  }
+
+  body:has(.rv-mobile-menu) {
+    overflow: hidden;
+  }
+}

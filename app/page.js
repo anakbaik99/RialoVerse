@@ -140,7 +140,7 @@ export default function Home() {
           <span>RIALO<span>VERSE</span></span>
         </a>
 
-        <nav className={`rv-nav-links ${menuOpen ? "rv-nav-open" : ""}`}>
+        <nav className="rv-nav-links">
           <a href="#ecosystem">Ecosystem</a>
           <a href="#how">How it works</a>
           <a href="#games">Games</a>
@@ -159,48 +159,51 @@ export default function Home() {
           </button>
         </div>
 
-        <div className={`rv-mobile-menu ${menuOpen ? "rv-mobile-open" : ""}`}>
-          <div className="rv-mobile-header">
-            <a href="/" className="rv-brand">
-              <span className="rv-brand-mark">R</span>
-              <span>RIALO<span>VERSE</span></span>
-            </a>
+        {menuOpen && (
+          <div className="rv-mobile-menu">
+            <div className="rv-mobile-header">
+              <a href="/" className="rv-mobile-brand">
+                <span className="rv-mobile-mark">R</span>
+                <span>RIALO<span>VERSE</span></span>
+              </a>
 
-            <button
-              className="rv-mobile-close"
-              onClick={() => setMenuOpen(false)}
-              aria-label="Close menu"
-            >
-              ×
-            </button>
+              <button
+                className="rv-mobile-close"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="rv-mobile-panel">
+              <a href="#ecosystem" onClick={() => setMenuOpen(false)}>
+                ECOSYSTEM
+              </a>
+
+              <a href="#how" onClick={() => setMenuOpen(false)}>
+                HOW IT WORKS
+              </a>
+
+              <a href="#games" onClick={() => setMenuOpen(false)}>
+                GAMES
+              </a>
+
+              <a href="#comi" onClick={() => setMenuOpen(false)}>
+                COMI
+              </a>
+
+              <a
+                href="/swap"
+                className="rv-mobile-launch"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span>🚀</span>
+                Launch App
+              </a>
+            </div>
           </div>
-
-          <div className="rv-mobile-panel">
-            <a href="#ecosystem" onClick={() => setMenuOpen(false)}>
-              ECOSYSTEM
-            </a>
-
-            <a href="#how" onClick={() => setMenuOpen(false)}>
-              HOW IT WORKS
-            </a>
-
-            <a href="#games" onClick={() => setMenuOpen(false)}>
-              GAMES
-            </a>
-
-            <a href="#comi" onClick={() => setMenuOpen(false)}>
-              COMI
-            </a>
-
-            <a
-              href="/swap"
-              className="rv-mobile-launch"
-              onClick={() => setMenuOpen(false)}
-            >
-              <span>🚀</span> Launch App
-            </a>
-          </div>
-        </div>
+        )}
       </header>
 
       {/* HERO */}
