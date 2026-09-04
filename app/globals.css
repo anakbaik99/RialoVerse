@@ -1763,7 +1763,8 @@ body {
 
   /* navbar normal */
   .rv-nav {
-    position: relative;
+    position: sticky;
+    top: 0;
     z-index: 10001;
   }
 
@@ -1797,6 +1798,22 @@ body {
     margin: 0 !important;
     display: block !important;
     background: #d7ff1f !important;
+  }
+
+  .rv-menu span {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+
+  .rv-menu-open span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .rv-menu-open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .rv-menu-open span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
   }
 
   /* DROPDOWN MENU */
