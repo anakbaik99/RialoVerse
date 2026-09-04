@@ -1782,20 +1782,21 @@ body {
     position: relative;
     z-index: 10006;
     display: flex !important;
-    background: red !important;
     width: 44px;
     height: 44px;
     padding: 10px;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
   }
 
   .rv-menu span {
-    width: 20px;
-    height: 2px;
-    display: block;
+    width: 22px !important;
+    height: 2px !important;
+    margin: 0 !important;
+    display: block !important;
+    background: #d7ff1f !important;
   }
 
   /* DROPDOWN MENU */
