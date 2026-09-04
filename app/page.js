@@ -136,10 +136,11 @@ function FeatureIcon({ name, size = 28 }) {
 
   if (name === "comi") {
     return (
-      <svg {...common}>
-        <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z" />
-        <path d="M19 16l0.7 1.8L21.5 18.5l-1.8 0.7L19 21l-0.7-1.8-1.8-0.7 1.8-0.7L19 16z" />
-      </svg>
+      <img
+        src="/comi-logo.png"
+        alt="COMI"
+        style={{ width: size, height: size, objectFit: "contain" }}
+      />
     );
   }
 
