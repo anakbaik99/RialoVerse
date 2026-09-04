@@ -60,9 +60,10 @@ export default function ComiPage() {
 
   function handleActionClick(action) {
     if (action.type === "SWAP") {
-      const dir = action.params.direction || "ETH_TO_RIALO";
+      const from = action.params.from || "ETH";
+      const to = action.params.to || "RIALO";
       const amount = action.params.amount || "";
-      router.push(`/swap?direction=${dir}&amount=${amount}`);
+      router.push(`/swap?from=${from}&to=${to}&amount=${amount}`);
     } else if (action.type === "CLAIM") {
       router.push("/faucet");
     }
