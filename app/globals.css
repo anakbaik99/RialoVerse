@@ -351,12 +351,11 @@ body {
   inset: -38px;
 }
 
-.rv-core span {
-  color: var(--rv-neon);
-  font-size: 115px;
-  font-weight: 1000;
-  line-height: 1;
-  text-shadow: 0 0 35px #d7ff1f55;
+.rv-core-logo {
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 25px #d7ff1f55);
 }
 
 .rv-orbit {
@@ -1485,8 +1484,9 @@ body {
     height: 130px;
   }
 
-  .rv-core span {
-    font-size: 80px;
+  .rv-core-logo {
+    width: 60%;
+    height: 60%;
   }
 
   .orbit-one {

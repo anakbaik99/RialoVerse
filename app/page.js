@@ -267,7 +267,7 @@ export default function Home() {
           <div className="rv-orbit orbit-three" />
 
           <div className="rv-core">
-            <span>R</span>
+            <img src="/logo.png" alt="RialoVerse" className="rv-core-logo" />
           </div>
 
           <div className="rv-orbit-node node-one">SWAP</div>
