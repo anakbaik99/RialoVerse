@@ -198,7 +198,6 @@ export default function Home() {
                 className="rv-mobile-launch"
                 onClick={() => setMenuOpen(false)}
               >
-                <span>🚀</span>
                 Launch App
               </a>
             </div>
