@@ -569,7 +569,6 @@ body {
   transition: .3s;
 }
 
-.rv-feature-item:hover,
 .rv-feature-item.active {
   background: #10131a;
   color: var(--rv-text);
