@@ -1,7 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, Edges } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 const BUILDINGS = [
@@ -9,6 +10,17 @@ const BUILDINGS = [
   { name: "Cube Runner", color: "#5fd0ff", position: [9, 0, -7] },
   { name: "Battle Arena", color: "#ff5f7a", position: [-9, 0, 9] },
   { name: "Token Match", color: "#ffb85f", position: [9, 0, 9] },
+];
+
+const LAMP_POSITIONS = [
+  [-4, 0, -15],
+  [4, 0, -15],
+  [-17, 0, -1],
+  [17, 0, -1],
+  [-17, 0, 11],
+  [17, 0, 11],
+  [-4, 0, 17],
+  [4, 0, 17],
 ];
 
 const GROUND_SIZE = 44;
@@ -19,19 +31,46 @@ function Ground() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
-      <meshStandardMaterial color="#0b0d09" />
+      <meshStandardMaterial color="#04050a" />
     </mesh>
+  );
+}
+
+function StreetLamp({ position }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[0.05, 0.07, 3, 8]} />
+        <meshStandardMaterial color="#0d0e14" />
+      </mesh>
+      <mesh position={[0, 3.05, 0]}>
+        <sphereGeometry args={[0.16, 12, 12]} />
+        <meshBasicMaterial color="#7fffe0" toneMapped={false} />
+      </mesh>
+      <pointLight position={[0, 3.05, 0]} color="#7fffe0" intensity={1.4} distance={6} />
+    </group>
   );
 }
 
 function Building({ data }) {
   return (
     <group position={data.position}>
-      <mesh position={[0, 2, 0]} castShadow>
+      <mesh position={[0, 2, 0]}>
         <boxGeometry args={[3.2, 4, 3.2]} />
-        <meshStandardMaterial color={data.color} emissive={data.color} emissiveIntensity={0.22} />
+        <meshBasicMaterial color="#05070a" transparent opacity={0.5} />
+        <Edges scale={1.001} threshold={15} color={data.color} />
       </mesh>
-      <Html position={[0, 4.6, 0]} center distanceFactor={16} occlude={false}>
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.9, 2.15, 40]} />
+        <meshBasicMaterial
+          color={data.color}
+          toneMapped={false}
+          transparent
+          opacity={0.85}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <Html position={[0, 4.8, 0]} center distanceFactor={16} occlude={false}>
         <div
           style={{
             color: "#fff",
@@ -50,17 +89,30 @@ function Building({ data }) {
 }
 
 function Avatar({ posRef }) {
-  const meshRef = useRef();
+  const groupRef = useRef();
   useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.position.set(posRef.current.x, 1.1, posRef.current.z);
+    if (groupRef.current) {
+      groupRef.current.position.set(posRef.current.x, 0, posRef.current.z);
     }
   });
   return (
-    <mesh ref={meshRef} castShadow>
-      <capsuleGeometry args={[0.5, 1, 4, 8]} />
-      <meshStandardMaterial color="#d7ff1f" emissive="#d7ff1f" emissiveIntensity={0.35} />
-    </mesh>
+    <group ref={groupRef}>
+      <mesh position={[0, 1.1, 0]}>
+        <capsuleGeometry args={[0.5, 1, 4, 8]} />
+        <meshStandardMaterial color="#0c0d08" emissive="#d7ff1f" emissiveIntensity={0.6} />
+        <Edges color="#d7ff1f" />
+      </mesh>
+      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.5, 0.82, 40]} />
+        <meshBasicMaterial
+          color="#d7ff1f"
+          toneMapped={false}
+          transparent
+          opacity={0.85}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
   );
 }
 
@@ -203,7 +255,7 @@ export default function GamesWorldPage() {
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", background: "#05070a", overflow: "hidden" }}>
+    <div style={{ position: "relative", width: "100%", height: "100vh", background: "#05030a", overflow: "hidden" }}>
       <div style={{ position: "fixed", top: 16, left: 16, zIndex: 20 }}>
         <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}>
           <span style={{ color: "#fff" }}>← Rialo</span>
@@ -218,16 +270,29 @@ export default function GamesWorldPage() {
       </div>
 
       <Canvas shadows camera={{ position: [8, 12, 26], fov: 45 }}>
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[10, 20, 10]} intensity={1} castShadow />
+        <color attach="background" args={["#05030a"]} />
+        <fog attach="fog" args={["#05030a", 14, 46]} />
+        <ambientLight intensity={0.22} />
+        <hemisphereLight args={["#241b3d", "#050208", 0.45]} />
+        <directionalLight position={[10, 20, 10]} intensity={0.4} castShadow />
+
         <Ground />
-        <gridHelper args={[GROUND_SIZE, 40, "#2a3a10", "#151b0a"]} position={[0, 0.01, 0]} />
+        <gridHelper args={[GROUND_SIZE, 40, "#2a1a4a", "#141026"]} position={[0, 0.01, 0]} />
+
         {BUILDINGS.map((b) => (
           <Building key={b.name} data={b} />
         ))}
+        {LAMP_POSITIONS.map((p, i) => (
+          <StreetLamp key={i} position={p} />
+        ))}
+
         <Avatar posRef={posRef} />
         <CameraRig posRef={posRef} />
         <SceneLogic posRef={posRef} joystickRef={joystickRef} onNear={setNear} />
+
+        <EffectComposer>
+          <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.9} intensity={1.1} mipmapBlur />
+        </EffectComposer>
       </Canvas>
 
       <Joystick joystickRef={joystickRef} />
