@@ -264,7 +264,7 @@ body {
   gap: 15px;
 }
 
-.rv-primary {
+.rv-site .rv-primary {
   background: var(--rv-neon);
   color: #090a04;
   font-weight: 800;
