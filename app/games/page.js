@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Edges } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -32,7 +32,7 @@ const ROADS = [
 ];
 
 const GROUND_SIZE = 44;
-const AVATAR_SPEED = 7;
+const AVATAR_SPEED = 3.5;
 const ENTER_RADIUS = 3.4;
 
 function Ground() {
@@ -147,7 +147,7 @@ function Arm({ x, armRef }) {
   );
 }
 
-function Avatar({ posRef, facingRef, joystickRef }) {
+function Avatar({ posRef, facingRef, moveRef }) {
   const groupRef = useRef();
   const leftLegRef = useRef();
   const rightLegRef = useRef();
@@ -165,9 +165,9 @@ function Avatar({ posRef, facingRef, joystickRef }) {
       );
     }
 
-    const speed = Math.hypot(joystickRef.current.x, joystickRef.current.y);
+    const speed = Math.hypot(moveRef.current.x, moveRef.current.y);
     if (speed > 0.05) {
-      walkTimeRef.current += delta * (7 + speed * 6);
+      walkTimeRef.current += delta * (5 + speed * 4);
     }
     const targetSwing = speed > 0.05 ? Math.sin(walkTimeRef.current) * 0.7 : 0;
     const lerpAmt = 0.25;
@@ -227,10 +227,10 @@ function CameraRig({ posRef }) {
   return null;
 }
 
-function SceneLogic({ posRef, joystickRef, facingRef, onNear }) {
+function SceneLogic({ posRef, moveRef, facingRef, onNear }) {
   useFrame((state, delta) => {
-    const jx = joystickRef.current.x;
-    const jy = joystickRef.current.y;
+    const jx = moveRef.current.x;
+    const jy = moveRef.current.y;
     if (jx !== 0 || jy !== 0) {
       posRef.current.x += jx * AVATAR_SPEED * delta;
       posRef.current.z += jy * AVATAR_SPEED * delta;
@@ -257,98 +257,105 @@ function SceneLogic({ posRef, joystickRef, facingRef, onNear }) {
   return null;
 }
 
-function Joystick({ joystickRef }) {
-  const baseRef = useRef(null);
-  const knobRef = useRef(null);
-  const [active, setActive] = useState(false);
-  const originRef = useRef({ x: 0, y: 0 });
-  const maxDist = 45;
+// Drag-anywhere movement (works with touch on mobile and mouse on desktop)
+function useDragMove(moveRef) {
+  const draggingRef = useRef(false);
+  const startRef = useRef({ x: 0, y: 0 });
+  const maxDist = 70;
 
-  const handleStart = (clientX, clientY) => {
-    const rect = baseRef.current.getBoundingClientRect();
-    originRef.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    setActive(true);
+  const start = (x, y) => {
+    draggingRef.current = true;
+    startRef.current = { x, y };
   };
-
-  const handleMove = (clientX, clientY) => {
-    if (!active) return;
-    let dx = clientX - originRef.current.x;
-    let dy = clientY - originRef.current.y;
+  const move = (x, y) => {
+    if (!draggingRef.current) return;
+    let dx = x - startRef.current.x;
+    let dy = y - startRef.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist > maxDist) {
       dx = (dx / dist) * maxDist;
       dy = (dy / dist) * maxDist;
     }
-    if (knobRef.current) {
-      knobRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
-    }
-    joystickRef.current = { x: dx / maxDist, y: dy / maxDist };
+    moveRef.current = { x: dx / maxDist, y: dy / maxDist };
+  };
+  const end = () => {
+    draggingRef.current = false;
+    moveRef.current = { x: 0, y: 0 };
   };
 
-  const handleEnd = () => {
-    setActive(false);
-    joystickRef.current = { x: 0, y: 0 };
-    if (knobRef.current) {
-      knobRef.current.style.transform = "translate(0px, 0px)";
-    }
+  return {
+    onPointerDown: (e) => start(e.clientX, e.clientY),
+    onPointerMove: (e) => move(e.clientX, e.clientY),
+    onPointerUp: end,
+    onPointerLeave: end,
+    onPointerCancel: end,
   };
+}
 
-  return (
-    <div
-      ref={baseRef}
-      onTouchStart={(e) => {
-        const t = e.touches[0];
-        handleStart(t.clientX, t.clientY);
-      }}
-      onTouchMove={(e) => {
-        const t = e.touches[0];
-        handleMove(t.clientX, t.clientY);
-      }}
-      onTouchEnd={handleEnd}
-      onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
-      onMouseMove={(e) => {
-        if (active) handleMove(e.clientX, e.clientY);
-      }}
-      onMouseUp={handleEnd}
-      onMouseLeave={handleEnd}
-      style={{
-        position: "fixed",
-        left: 30,
-        bottom: 30,
-        width: 100,
-        height: 100,
-        borderRadius: "50%",
-        background: "rgba(215,255,31,0.12)",
-        border: "2px solid #d7ff1f55",
-        touchAction: "none",
-        zIndex: 20,
-      }}
-    >
-      <div
-        ref={knobRef}
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: 44,
-          height: 44,
-          marginLeft: -22,
-          marginTop: -22,
-          borderRadius: "50%",
-          background: "#d7ff1f",
-          boxShadow: "0 0 20px #d7ff1f88",
-        }}
-      />
-    </div>
-  );
+// WASD keyboard movement (desktop)
+function useKeyboardMove(moveRef, dragActiveRef) {
+  useEffect(() => {
+    const keys = { w: false, a: false, s: false, d: false };
+
+    const recompute = () => {
+      if (dragActiveRef.current) return;
+      let x = 0;
+      let y = 0;
+      if (keys.a) x -= 1;
+      if (keys.d) x += 1;
+      if (keys.w) y -= 1;
+      if (keys.s) y += 1;
+      const len = Math.hypot(x, y);
+      if (len > 0) {
+        x /= len;
+        y /= len;
+      }
+      moveRef.current = { x, y };
+    };
+
+    const down = (e) => {
+      const k = e.key.toLowerCase();
+      if (k in keys) {
+        keys[k] = true;
+        recompute();
+      }
+    };
+    const up = (e) => {
+      const k = e.key.toLowerCase();
+      if (k in keys) {
+        keys[k] = false;
+        recompute();
+      }
+    };
+
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, [moveRef, dragActiveRef]);
 }
 
 export default function GamesWorldPage() {
   const posRef = useRef({ x: 0, z: 14 });
   const facingRef = useRef(0);
-  const joystickRef = useRef({ x: 0, y: 0 });
+  const moveRef = useRef({ x: 0, y: 0 });
+  const dragActiveRef = useRef(false);
   const [near, setNear] = useState(null);
   const [toast, setToast] = useState("");
+
+  const dragHandlers = useDragMove(moveRef);
+  useKeyboardMove(moveRef, dragActiveRef);
+
+  const wrappedDown = (e) => {
+    dragActiveRef.current = true;
+    dragHandlers.onPointerDown(e);
+  };
+  const wrappedUp = (e) => {
+    dragActiveRef.current = false;
+    dragHandlers.onPointerUp(e);
+  };
 
   const handleEnter = () => {
     if (!near) return;
@@ -357,7 +364,14 @@ export default function GamesWorldPage() {
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", background: "#05030a", overflow: "hidden" }}>
+    <div
+      style={{ position: "relative", width: "100%", height: "100vh", background: "#05030a", overflow: "hidden", touchAction: "none" }}
+      onPointerDown={wrappedDown}
+      onPointerMove={dragHandlers.onPointerMove}
+      onPointerUp={wrappedUp}
+      onPointerLeave={wrappedUp}
+      onPointerCancel={wrappedUp}
+    >
       <div style={{ position: "fixed", top: 16, left: 16, zIndex: 20 }}>
         <a href="/" style={{ textDecoration: "none", fontWeight: 700 }}>
           <span style={{ color: "#fff" }}>← Rialo</span>
@@ -366,9 +380,9 @@ export default function GamesWorldPage() {
       </div>
 
       <div style={{ position: "fixed", top: 16, right: 16, color: "#8a8b9c", fontSize: 11, textAlign: "right", zIndex: 20 }}>
-        Gunakan joystick
+        Geser layar untuk jalan
         <br />
-        untuk jalan
+        (atau WASD di laptop)
       </div>
 
       <Canvas shadows camera={{ position: [8, 12, 26], fov: 45 }}>
@@ -391,23 +405,21 @@ export default function GamesWorldPage() {
           <StreetLamp key={i} position={p} />
         ))}
 
-        <Avatar posRef={posRef} facingRef={facingRef} joystickRef={joystickRef} />
+        <Avatar posRef={posRef} facingRef={facingRef} moveRef={moveRef} />
         <CameraRig posRef={posRef} />
-        <SceneLogic posRef={posRef} joystickRef={joystickRef} facingRef={facingRef} onNear={setNear} />
+        <SceneLogic posRef={posRef} moveRef={moveRef} facingRef={facingRef} onNear={setNear} />
 
         <EffectComposer>
           <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.9} intensity={1.1} mipmapBlur />
         </EffectComposer>
       </Canvas>
 
-      <Joystick joystickRef={joystickRef} />
-
       {near && (
         <button
           onClick={handleEnter}
           style={{
             position: "fixed",
-            bottom: 150,
+            bottom: 60,
             left: "50%",
             transform: "translateX(-50%)",
             padding: "12px 28px",
