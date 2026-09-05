@@ -72,13 +72,6 @@ const features = [
   },
 ];
 
-const games = [
-  ["🎡", "Rialo Wheel", "Spin & Win", "1,245 Players", "HOT"],
-  ["◇", "Cube Runner", "Endless Runner", "872 Players", "NEW"],
-  ["⚔", "Battle Arena", "PvP Battle", "1,532 Players", ""],
-  ["◆", "Token Match", "Match & Earn", "654 Players", ""],
-];
-
 function FeatureIcon({ name, size = 28 }) {
   const common = {
     width: size,
@@ -606,41 +599,12 @@ export default function Home() {
             Have fun.
           </p>
         </div>
-
-        <div className="rv-games-grid">
-          {games.map(([icon, title, desc, players, badge], index) => (
-            <div
-              className="rv-game-card rv-reveal"
-              key={title}
-              style={{ "--delay": `${index * 80}ms` }}
-            >
-              <div className="rv-game-visual">
-                <div className="rv-game-grid" />
-                <span>{icon}</span>
-
-                {badge && (
-                  <em>{badge}</em>
-                )}
-
-                <div className="rv-game-glow" />
-              </div>
-
-              <div className="rv-game-info">
-                <span className="rv-game-index">
-                  GAME / 0{index + 1}
-                </span>
-
-                <h3>{title}</h3>
-                <p>{desc}</p>
-
-                <div className="rv-game-bottom">
-                  <small>◉ {players}</small>
-                  <button>PLAY NOW →</button>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="rv-games-cta rv-reveal">
+          <a href="/games" className="rv-primary">
+            Enter 3D World <span>-&gt;</span>
+          </a>
         </div>
+
       </section>
 
       {/* COMI */}
