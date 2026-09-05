@@ -121,9 +121,9 @@ function Building({ data }) {
   );
 }
 
-function RobotPart({ position, args, intensity = 0.3 }) {
+function RobotBox({ args, intensity = 0.3, offsetY = 0 }) {
   return (
-    <mesh position={position}>
+    <mesh position={[0, offsetY, 0]}>
       <boxGeometry args={args} />
       <meshStandardMaterial color="#0c0d10" emissive="#d7ff1f" emissiveIntensity={intensity} />
       <Edges color="#d7ff1f" />
@@ -131,9 +131,31 @@ function RobotPart({ position, args, intensity = 0.3 }) {
   );
 }
 
-function Avatar({ posRef, facingRef }) {
+function Leg({ x, legRef }) {
+  return (
+    <group ref={legRef} position={[x, 0.7, 0]}>
+      <RobotBox args={[0.22, 0.7, 0.22]} offsetY={-0.35} />
+    </group>
+  );
+}
+
+function Arm({ x, armRef }) {
+  return (
+    <group ref={armRef} position={[x, 1.275, 0]}>
+      <RobotBox args={[0.16, 0.55, 0.16]} offsetY={-0.275} />
+    </group>
+  );
+}
+
+function Avatar({ posRef, facingRef, joystickRef }) {
   const groupRef = useRef();
-  useFrame(() => {
+  const leftLegRef = useRef();
+  const rightLegRef = useRef();
+  const leftArmRef = useRef();
+  const rightArmRef = useRef();
+  const walkTimeRef = useRef(0);
+
+  useFrame((state, delta) => {
     if (groupRef.current) {
       groupRef.current.position.set(posRef.current.x, 0, posRef.current.z);
       groupRef.current.rotation.y = THREE.MathUtils.lerp(
@@ -142,15 +164,32 @@ function Avatar({ posRef, facingRef }) {
         0.18
       );
     }
+
+    const speed = Math.hypot(joystickRef.current.x, joystickRef.current.y);
+    if (speed > 0.05) {
+      walkTimeRef.current += delta * (7 + speed * 6);
+    }
+    const targetSwing = speed > 0.05 ? Math.sin(walkTimeRef.current) * 0.7 : 0;
+    const lerpAmt = 0.25;
+
+    if (leftLegRef.current)
+      leftLegRef.current.rotation.x = THREE.MathUtils.lerp(leftLegRef.current.rotation.x, targetSwing, lerpAmt);
+    if (rightLegRef.current)
+      rightLegRef.current.rotation.x = THREE.MathUtils.lerp(rightLegRef.current.rotation.x, -targetSwing, lerpAmt);
+    if (leftArmRef.current)
+      leftArmRef.current.rotation.x = THREE.MathUtils.lerp(leftArmRef.current.rotation.x, -targetSwing * 0.6, lerpAmt);
+    if (rightArmRef.current)
+      rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, targetSwing * 0.6, lerpAmt);
   });
+
   return (
     <group ref={groupRef}>
-      <RobotPart position={[-0.22, 0.35, 0]} args={[0.22, 0.7, 0.22]} />
-      <RobotPart position={[0.22, 0.35, 0]} args={[0.22, 0.7, 0.22]} />
-      <RobotPart position={[0, 1.05, 0]} args={[0.7, 0.6, 0.4]} intensity={0.35} />
-      <RobotPart position={[-0.48, 1.0, 0]} args={[0.16, 0.55, 0.16]} />
-      <RobotPart position={[0.48, 1.0, 0]} args={[0.16, 0.55, 0.16]} />
-      <RobotPart position={[0, 1.55, 0]} args={[0.42, 0.38, 0.4]} intensity={0.4} />
+      <Leg x={-0.22} legRef={leftLegRef} />
+      <Leg x={0.22} legRef={rightLegRef} />
+      <RobotBox args={[0.7, 0.6, 0.4]} intensity={0.35} offsetY={1.05} />
+      <Arm x={-0.48} armRef={leftArmRef} />
+      <Arm x={0.48} armRef={rightArmRef} />
+      <RobotBox args={[0.42, 0.38, 0.4]} intensity={0.4} offsetY={1.55} />
       <mesh position={[0, 1.56, 0.21]}>
         <boxGeometry args={[0.26, 0.08, 0.02]} />
         <meshBasicMaterial color="#d7ff1f" toneMapped={false} />
@@ -352,7 +391,7 @@ export default function GamesWorldPage() {
           <StreetLamp key={i} position={p} />
         ))}
 
-        <Avatar posRef={posRef} facingRef={facingRef} />
+        <Avatar posRef={posRef} facingRef={facingRef} joystickRef={joystickRef} />
         <CameraRig posRef={posRef} />
         <SceneLogic posRef={posRef} joystickRef={joystickRef} facingRef={facingRef} onNear={setNear} />
 
