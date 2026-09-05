@@ -23,6 +23,14 @@ const LAMP_POSITIONS = [
   [4, 0, 17],
 ];
 
+const ROADS = [
+  { from: [0, 0, 0], to: [-9, 0, -7] },
+  { from: [0, 0, 0], to: [9, 0, -7] },
+  { from: [0, 0, 0], to: [-9, 0, 9] },
+  { from: [0, 0, 0], to: [9, 0, 9] },
+  { from: [0, 0, 0], to: [0, 0, 18] },
+];
+
 const GROUND_SIZE = 44;
 const AVATAR_SPEED = 7;
 const ENTER_RADIUS = 3.4;
@@ -33,6 +41,31 @@ function Ground() {
       <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
       <meshStandardMaterial color="#04050a" />
     </mesh>
+  );
+}
+
+function Road({ from, to, width = 2.6 }) {
+  const dx = to[0] - from[0];
+  const dz = to[2] - from[2];
+  const length = Math.sqrt(dx * dx + dz * dz);
+  const angle = Math.atan2(dx, dz);
+  const mx = (from[0] + to[0]) / 2;
+  const mz = (from[2] + to[2]) / 2;
+  return (
+    <group position={[mx, 0.015, mz]} rotation={[0, angle, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[width, length]} />
+        <meshStandardMaterial color="#0d0f1a" />
+      </mesh>
+      <mesh position={[width / 2 - 0.05, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.06, length]} />
+        <meshBasicMaterial color="#4a5fb8" toneMapped={false} />
+      </mesh>
+      <mesh position={[-(width / 2 - 0.05), 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.06, length]} />
+        <meshBasicMaterial color="#4a5fb8" toneMapped={false} />
+      </mesh>
+    </group>
   );
 }
 
@@ -88,21 +121,49 @@ function Building({ data }) {
   );
 }
 
-function Avatar({ posRef }) {
+function RobotPart({ position, args, intensity = 0.3 }) {
+  return (
+    <mesh position={position}>
+      <boxGeometry args={args} />
+      <meshStandardMaterial color="#0c0d10" emissive="#d7ff1f" emissiveIntensity={intensity} />
+      <Edges color="#d7ff1f" />
+    </mesh>
+  );
+}
+
+function Avatar({ posRef, facingRef }) {
   const groupRef = useRef();
   useFrame(() => {
     if (groupRef.current) {
       groupRef.current.position.set(posRef.current.x, 0, posRef.current.z);
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(
+        groupRef.current.rotation.y,
+        facingRef.current,
+        0.18
+      );
     }
   });
   return (
     <group ref={groupRef}>
-      <mesh position={[0, 1.1, 0]}>
-        <capsuleGeometry args={[0.5, 1, 4, 8]} />
-        <meshStandardMaterial color="#0c0d08" emissive="#d7ff1f" emissiveIntensity={0.6} />
-        <Edges color="#d7ff1f" />
+      <RobotPart position={[-0.22, 0.35, 0]} args={[0.22, 0.7, 0.22]} />
+      <RobotPart position={[0.22, 0.35, 0]} args={[0.22, 0.7, 0.22]} />
+      <RobotPart position={[0, 1.05, 0]} args={[0.7, 0.6, 0.4]} intensity={0.35} />
+      <RobotPart position={[-0.48, 1.0, 0]} args={[0.16, 0.55, 0.16]} />
+      <RobotPart position={[0.48, 1.0, 0]} args={[0.16, 0.55, 0.16]} />
+      <RobotPart position={[0, 1.55, 0]} args={[0.42, 0.38, 0.4]} intensity={0.4} />
+      <mesh position={[0, 1.56, 0.21]}>
+        <boxGeometry args={[0.26, 0.08, 0.02]} />
+        <meshBasicMaterial color="#d7ff1f" toneMapped={false} />
       </mesh>
-      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 1.86, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, 0.22, 6]} />
+        <meshStandardMaterial color="#111319" />
+      </mesh>
+      <mesh position={[0, 1.99, 0]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshBasicMaterial color="#d7ff1f" toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.5, 0.82, 40]} />
         <meshBasicMaterial
           color="#d7ff1f"
@@ -127,13 +188,14 @@ function CameraRig({ posRef }) {
   return null;
 }
 
-function SceneLogic({ posRef, joystickRef, onNear }) {
+function SceneLogic({ posRef, joystickRef, facingRef, onNear }) {
   useFrame((state, delta) => {
     const jx = joystickRef.current.x;
     const jy = joystickRef.current.y;
     if (jx !== 0 || jy !== 0) {
       posRef.current.x += jx * AVATAR_SPEED * delta;
       posRef.current.z += jy * AVATAR_SPEED * delta;
+      facingRef.current = Math.atan2(jx, jy);
 
       const half = GROUND_SIZE / 2 - 1;
       posRef.current.x = Math.max(-half, Math.min(half, posRef.current.x));
@@ -244,6 +306,7 @@ function Joystick({ joystickRef }) {
 
 export default function GamesWorldPage() {
   const posRef = useRef({ x: 0, z: 14 });
+  const facingRef = useRef(0);
   const joystickRef = useRef({ x: 0, y: 0 });
   const [near, setNear] = useState(null);
   const [toast, setToast] = useState("");
@@ -278,6 +341,9 @@ export default function GamesWorldPage() {
 
         <Ground />
         <gridHelper args={[GROUND_SIZE, 40, "#2a1a4a", "#141026"]} position={[0, 0.01, 0]} />
+        {ROADS.map((r, i) => (
+          <Road key={i} from={r.from} to={r.to} />
+        ))}
 
         {BUILDINGS.map((b) => (
           <Building key={b.name} data={b} />
@@ -286,9 +352,9 @@ export default function GamesWorldPage() {
           <StreetLamp key={i} position={p} />
         ))}
 
-        <Avatar posRef={posRef} />
+        <Avatar posRef={posRef} facingRef={facingRef} />
         <CameraRig posRef={posRef} />
-        <SceneLogic posRef={posRef} joystickRef={joystickRef} onNear={setNear} />
+        <SceneLogic posRef={posRef} joystickRef={joystickRef} facingRef={facingRef} onNear={setNear} />
 
         <EffectComposer>
           <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.9} intensity={1.1} mipmapBlur />
