@@ -431,7 +431,6 @@ export default function Home() {
                 className={`rv-feature-item ${
                   activeFeature === index ? "active" : ""
                 }`}
-                onMouseEnter={() => setActiveFeature(index)}
                 onClick={() => setActiveFeature(index)}
               >
                 <span className="rv-feature-number">
