@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
 import { Html, Edges } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
@@ -167,6 +167,26 @@ function Building({ data }) {
           {data.name}
         </div>
       </Html>
+    </group>
+  );
+}
+
+function SpawnMarker() {
+  const texture = useLoader(THREE.TextureLoader, "/spawn-logo.svg");
+  return (
+    <group>
+      <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.7, 1.9, 48]} />
+        <meshBasicMaterial color="#d7ff1f" toneMapped={false} transparent opacity={0.6} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1.45, 48]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.9, 1.9]} />
+        <meshBasicMaterial map={texture} transparent toneMapped={false} side={THREE.DoubleSide} />
+      </mesh>
     </group>
   );
 }
@@ -404,7 +424,7 @@ function useKeyboardMove(moveRef, dragActiveRef) {
 }
 
 export default function GamesWorldPage() {
-  const posRef = useRef({ x: 0, z: 14 });
+  const posRef = useRef({ x: 0, z: 0 });
   const facingRef = useRef(0);
   const moveRef = useRef({ x: 0, y: 0 });
   const dragActiveRef = useRef(false);
@@ -460,6 +480,7 @@ export default function GamesWorldPage() {
 
         <Ground />
         <gridHelper args={[GROUND_SIZE, 40, "#2a1a4a", "#141026"]} position={[0, 0.01, 0]} />
+        <SpawnMarker />
         {ROADS.map((r, i) => (
           <Road key={i} from={r.from} to={r.to} />
         ))}
