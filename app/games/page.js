@@ -35,6 +35,13 @@ const GROUND_SIZE = 44;
 const AVATAR_SPEED = 3.5;
 const ENTER_RADIUS = 3.4;
 
+function lerpAngle(a, b, t) {
+  let diff = b - a;
+  diff = ((diff + Math.PI) % (Math.PI * 2)) - Math.PI;
+  diff = diff < -Math.PI ? diff + Math.PI * 2 : diff;
+  return a + diff * t;
+}
+
 function Ground() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -158,7 +165,7 @@ function Avatar({ posRef, facingRef, moveRef }) {
   useFrame((state, delta) => {
     if (groupRef.current) {
       groupRef.current.position.set(posRef.current.x, 0, posRef.current.z);
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(
+      groupRef.current.rotation.y = lerpAngle(
         groupRef.current.rotation.y,
         facingRef.current,
         0.18
@@ -267,11 +274,16 @@ function useDragMove(moveRef) {
     draggingRef.current = true;
     startRef.current = { x, y };
   };
+  const deadZone = 6;
   const move = (x, y) => {
     if (!draggingRef.current) return;
     let dx = x - startRef.current.x;
     let dy = y - startRef.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < deadZone) {
+      moveRef.current = { x: 0, y: 0 };
+      return;
+    }
     if (dist > maxDist) {
       dx = (dx / dist) * maxDist;
       dy = (dy / dist) * maxDist;
