@@ -465,12 +465,6 @@ export default function GamesWorldPage() {
         </a>
       </div>
 
-      <div style={{ position: "fixed", top: 16, right: 16, color: "#8a8b9c", fontSize: 11, textAlign: "right", zIndex: 20 }}>
-        Geser layar untuk jalan
-        <br />
-        (atau WASD di laptop)
-      </div>
-
       <Canvas shadows camera={{ position: [8, 12, 26], fov: 45 }}>
         <color attach="background" args={["#05030a"]} />
         <fog attach="fog" args={["#05030a", 14, 46]} />
