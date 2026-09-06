@@ -195,31 +195,31 @@ function CornerBillboard() {
   const half = GROUND_SIZE / 2 - 1;
   return (
     <group>
-      <mesh position={[-half, 4, -6]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[10, 5.5]} />
+      <mesh position={[-half, 6, -10]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[20, 11]} />
         <meshBasicMaterial color="#0a0a0a" toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
       <Html
-        position={[-half + 0.05, 4, -6]}
+        position={[-half + 0.05, 6, -10]}
         rotation={[0, Math.PI / 2, 0]}
         transform
         occlude={false}
-        distanceFactor={6}
+        distanceFactor={3}
       >
-        <div style={{ width: 320, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
-          <img src="/rialo-wordmark.svg" style={{ width: 220 }} alt="" />
+        <div style={{ width: 620, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+          <img src="/rialo-wordmark.svg" style={{ width: 460 }} alt="" />
         </div>
       </Html>
 
-      <mesh position={[-6, 4, -half]} rotation={[0, 0, 0]}>
-        <planeGeometry args={[14, 7]} />
+      <mesh position={[-10, 6, -half]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[24, 12]} />
         <meshBasicMaterial color="#0d0d0c" toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
-      <Html position={[-6, 4, -half + 0.05]} transform occlude={false} distanceFactor={6}>
+      <Html position={[-10, 6, -half + 0.05]} transform occlude={false} distanceFactor={3}>
         <div
           style={{
-            width: 420,
-            height: 210,
+            width: 900,
+            height: 450,
             position: "relative",
             overflow: "hidden",
             display: "flex",
@@ -228,12 +228,23 @@ function CornerBillboard() {
             pointerEvents: "none",
           }}
         >
-          <div style={{ position: "absolute", width: 120, height: 46, borderRadius: 30, background: "#E8E3D5", top: 40, left: -20 }} />
-          <div style={{ position: "absolute", width: 90, height: 90, borderRadius: "50%", background: "#9fe6c8", bottom: -30, right: 10 }} />
-          <div style={{ position: "absolute", width: 130, height: 44, borderRadius: 26, background: "#E8E3D5", bottom: 20, left: 30 }} />
-          <div style={{ color: "#EDE8DA", fontSize: 34, fontWeight: 600, fontFamily: "sans-serif", textAlign: "center", zIndex: 1, lineHeight: 1.3 }}>
+          <div style={{ position: "absolute", width: 220, height: 80, borderRadius: 40, background: "#E8E3D5", top: 60, left: -60 }} />
+          <div style={{ position: "absolute", width: 260, height: 80, borderRadius: 40, background: "#E8E3D5", bottom: 130, left: 20 }} />
+          <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "#9fe6c8", bottom: -90, right: -30 }} />
+          <div style={{ position: "absolute", width: 180, height: 70, borderRadius: 35, background: "#9fe6c8", bottom: 60, right: 60 }} />
+          <div
+            style={{
+              color: "#EDE8DA",
+              fontSize: 68,
+              fontWeight: 700,
+              fontFamily: "sans-serif",
+              textAlign: "center",
+              zIndex: 1,
+              lineHeight: 1.25,
+            }}
+          >
             Say Hello to<br />
-            <span style={{ fontWeight: 800 }}>Rialo</span>
+            <span style={{ fontWeight: 900 }}>Rialo</span>
           </div>
         </div>
       </Html>
