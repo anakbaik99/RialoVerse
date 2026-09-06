@@ -142,7 +142,7 @@ function FeatureIcon({ name, size = 28 }) {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("ecosystem");
+  const [activeSection, setActiveSection] = useState("");
   const [activeFeature, setActiveFeature] = useState(0);
 
   const { address, isConnected } = useAccount();
