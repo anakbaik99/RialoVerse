@@ -34,6 +34,7 @@ const ROADS = [
 const GROUND_SIZE = 44;
 const AVATAR_SPEED = 3.5;
 const ENTER_RADIUS = 3.4;
+const BUILDING_RADIUS = 2.3;
 
 function lerpAngle(a, b, t) {
   let diff = b - a;
@@ -95,13 +96,9 @@ function StreetLamp({ position }) {
 function Building({ data }) {
   return (
     <group position={data.position}>
-      <mesh position={[0, 2, 0]}>
-        <boxGeometry args={[3.2, 4, 3.2]} />
-        <meshBasicMaterial color="#05070a" transparent opacity={0.5} />
-        <Edges scale={1.001} threshold={15} color={data.color} />
-      </mesh>
+      {/* base glow ring */}
       <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.9, 2.15, 40]} />
+        <ringGeometry args={[1.9, 2.15, 48]} />
         <meshBasicMaterial
           color={data.color}
           toneMapped={false}
@@ -110,7 +107,53 @@ function Building({ data }) {
           side={THREE.DoubleSide}
         />
       </mesh>
-      <Html position={[0, 4.8, 0]} center distanceFactor={16} occlude={false}>
+
+      {/* tapered tower, 3 stacked segments */}
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[1.9, 2.1, 1, 8]} />
+        <meshBasicMaterial color="#05070a" transparent opacity={0.55} />
+        <Edges color={data.color} />
+      </mesh>
+      <mesh position={[0, 1.7, 0]}>
+        <cylinderGeometry args={[1.5, 1.9, 1.4, 8]} />
+        <meshBasicMaterial color="#05070a" transparent opacity={0.55} />
+        <Edges color={data.color} />
+      </mesh>
+      <mesh position={[0, 3.0, 0]}>
+        <cylinderGeometry args={[1.0, 1.5, 1.2, 8]} />
+        <meshBasicMaterial color="#05070a" transparent opacity={0.55} />
+        <Edges color={data.color} />
+      </mesh>
+
+      {/* mid glow ring, floating around the tower */}
+      <mesh position={[0, 2.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.55, 1.75, 48]} />
+        <meshBasicMaterial
+          color={data.color}
+          toneMapped={false}
+          transparent
+          opacity={0.75}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* glass dome on top */}
+      <mesh position={[0, 3.75, 0]}>
+        <sphereGeometry args={[1.05, 20, 20]} />
+        <meshStandardMaterial
+          color={data.color}
+          transparent
+          opacity={0.35}
+          emissive={data.color}
+          emissiveIntensity={0.4}
+        />
+      </mesh>
+      <mesh position={[0, 3.75, 0]}>
+        <sphereGeometry args={[1.06, 16, 16]} />
+        <meshBasicMaterial color={data.color} wireframe transparent opacity={0.5} />
+      </mesh>
+
+      <Html position={[0, 5.3, 0]} center distanceFactor={16} occlude={false}>
         <div
           style={{
             color: "#fff",
@@ -246,6 +289,17 @@ function SceneLogic({ posRef, moveRef, facingRef, onNear }) {
       const half = GROUND_SIZE / 2 - 1;
       posRef.current.x = Math.max(-half, Math.min(half, posRef.current.x));
       posRef.current.z = Math.max(-half, Math.min(half, posRef.current.z));
+
+      for (const b of BUILDINGS) {
+        const bx = posRef.current.x - b.position[0];
+        const bz = posRef.current.z - b.position[2];
+        const bdist = Math.sqrt(bx * bx + bz * bz);
+        if (bdist < BUILDING_RADIUS && bdist > 0.0001) {
+          const push = BUILDING_RADIUS / bdist;
+          posRef.current.x = b.position[0] + bx * push;
+          posRef.current.z = b.position[2] + bz * push;
+        }
+      }
     }
 
     let nearest = null;
