@@ -817,9 +817,9 @@ export default function Home() {
 
         <div>
           <b>COMMUNITY</b>
-          <a href="#">Discord</a>
-          <a href="#">Twitter</a>
-          <a href="#">Telegram</a>
+          <a href="https://discord.gg/RialoProtocol" target="_blank" rel="noopener noreferrer">Discord</a>
+          <a href="https://x.com/RialoHQ" target="_blank" rel="noopener noreferrer">Twitter</a>
+          <a href="https://t.me/rialoprotocol" target="_blank" rel="noopener noreferrer">Telegram</a>
         </div>
 
         <div>
