@@ -598,6 +598,16 @@ export default function Home() {
             Have fun.
           </p>
         </div>
+
+        <div className="rv-games-preview rv-reveal">
+          <div className="rv-games-grid" />
+          <div className="rv-games-scan" />
+          <div className="rv-games-tower rv-tower-1" />
+          <div className="rv-games-tower rv-tower-2" />
+          <div className="rv-games-tower rv-tower-3" />
+          <div className="rv-games-avatar" />
+        </div>
+
         <div className="rv-games-cta rv-reveal">
           <a href="/games" className="rv-primary">
             Enter 3D World <span>-&gt;</span>

@@ -2010,3 +2010,93 @@ body {
     overflow: hidden;
   }
 }
+
+/* Games section - 3D world preview */
+.rv-games-preview {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  height: 220px;
+  margin: 30px auto 10px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0d0f14 0%, #07080c 100%);
+  border: 1px solid #1d2029;
+}
+
+.rv-games-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(215, 255, 31, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(215, 255, 31, 0.14) 1px, transparent 1px);
+  background-size: 32px 32px;
+  transform: rotateX(58deg) scale(1.6);
+  transform-origin: center bottom;
+  animation: rv-grid-move 6s linear infinite;
+}
+
+@keyframes rv-grid-move {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 0 32px, 32px 0; }
+}
+
+.rv-games-scan {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(180deg, rgba(215, 255, 31, 0.1), transparent);
+  animation: rv-scan-move 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes rv-scan-move {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(30px); opacity: 0.2; }
+}
+
+.rv-games-tower {
+  position: absolute;
+  bottom: 30px;
+  width: 18px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--rv-neon), #2c3a10);
+  box-shadow: 0 0 14px rgba(215, 255, 31, 0.55);
+  animation: rv-tower-float 3s ease-in-out infinite;
+}
+
+.rv-tower-1 { left: 22%; height: 70px; animation-delay: 0s; }
+.rv-tower-2 { left: 48%; height: 100px; background: linear-gradient(180deg, #9fe6c8, #1c3327); box-shadow: 0 0 14px rgba(159, 230, 200, 0.5); animation-delay: 0.4s; }
+.rv-tower-3 { left: 74%; height: 55px; animation-delay: 0.8s; }
+
+@keyframes rv-tower-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.rv-games-avatar {
+  position: absolute;
+  bottom: 34px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 3px var(--rv-neon);
+  animation: rv-avatar-path 4s ease-in-out infinite;
+}
+
+@keyframes rv-avatar-path {
+  0%   { left: 15%; }
+  25%  { left: 40%; }
+  50%  { left: 60%; }
+  75%  { left: 35%; }
+  100% { left: 15%; }
+}
+
+@media (max-width: 720px) {
+  .rv-games-preview {
+    height: 170px;
+  }
+}
