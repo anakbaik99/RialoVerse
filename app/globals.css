@@ -2020,25 +2020,11 @@ body {
   margin: 30px auto 10px;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(180deg, #0d0f14 0%, #07080c 100%);
+  background: radial-gradient(circle at center, #10131a 0%, #07080c 75%);
   border: 1px solid #1d2029;
-}
-
-.rv-games-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(215, 255, 31, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(215, 255, 31, 0.14) 1px, transparent 1px);
-  background-size: 32px 32px;
-  transform: rotateX(58deg) scale(1.6);
-  transform-origin: center bottom;
-  animation: rv-grid-move 6s linear infinite;
-}
-
-@keyframes rv-grid-move {
-  from { background-position: 0 0, 0 0; }
-  to { background-position: 0 32px, 32px 0; }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rv-games-scan {
@@ -2047,56 +2033,101 @@ body {
   left: 0;
   right: 0;
   height: 45%;
-  background: linear-gradient(180deg, rgba(215, 255, 31, 0.1), transparent);
+  background: linear-gradient(180deg, rgba(215, 255, 31, 0.08), transparent);
   animation: rv-scan-move 3.5s ease-in-out infinite;
   pointer-events: none;
 }
 
 @keyframes rv-scan-move {
-  0%, 100% { transform: translateY(0); opacity: 0.6; }
-  50% { transform: translateY(30px); opacity: 0.2; }
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(20px); opacity: 0.15; }
 }
 
-.rv-games-tower {
+.rv-games-rings {
   position: absolute;
-  bottom: 30px;
-  width: 18px;
-  border-radius: 4px 4px 0 0;
-  background: linear-gradient(180deg, var(--rv-neon), #2c3a10);
-  box-shadow: 0 0 14px rgba(215, 255, 31, 0.55);
-  animation: rv-tower-float 3s ease-in-out infinite;
+  width: 160px;
+  height: 160px;
 }
 
-.rv-tower-1 { left: 22%; height: 70px; animation-delay: 0s; }
-.rv-tower-2 { left: 48%; height: 100px; background: linear-gradient(180deg, #9fe6c8, #1c3327); box-shadow: 0 0 14px rgba(159, 230, 200, 0.5); animation-delay: 0.4s; }
-.rv-tower-3 { left: 74%; height: 55px; animation-delay: 0.8s; }
-
-@keyframes rv-tower-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-.rv-games-avatar {
+.rv-games-rings span {
   position: absolute;
-  bottom: 34px;
+  inset: 0;
+  border: 1px solid rgba(215, 255, 31, 0.35);
+  border-radius: 50%;
+  animation: rv-ring-pulse 3s ease-out infinite;
+}
+
+.rv-games-rings span:nth-child(2) { animation-delay: 1s; }
+.rv-games-rings span:nth-child(3) { animation-delay: 2s; }
+
+@keyframes rv-ring-pulse {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.rv-games-hex {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--rv-neon), #1c2308);
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+  box-shadow: 0 0 22px rgba(215, 255, 31, 0.6);
+  animation: rv-hex-spin 6s linear infinite;
+}
+
+@keyframes rv-hex-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rv-games-orbit {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  animation: rv-orbit-spin 5s linear infinite;
+}
+
+.rv-games-orbit-dot {
+  position: absolute;
+  top: -5px;
+  left: 50%;
   width: 10px;
   height: 10px;
+  margin-left: -5px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 10px 3px var(--rv-neon);
-  animation: rv-avatar-path 4s ease-in-out infinite;
 }
 
-@keyframes rv-avatar-path {
-  0%   { left: 15%; }
-  25%  { left: 40%; }
-  50%  { left: 60%; }
-  75%  { left: 35%; }
-  100% { left: 15%; }
+@keyframes rv-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rv-games-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #9fe6c8;
+  box-shadow: 0 0 8px rgba(159, 230, 200, 0.8);
+  animation: rv-particle-float 4s ease-in-out infinite;
+}
+
+.rv-games-particle.p1 { top: 20%; left: 18%; animation-delay: 0s; }
+.rv-games-particle.p2 { top: 70%; left: 76%; animation-delay: 1.3s; }
+.rv-games-particle.p3 { top: 30%; left: 80%; animation-delay: 2.6s; }
+
+@keyframes rv-particle-float {
+  0%, 100% { transform: translateY(0); opacity: 0.8; }
+  50% { transform: translateY(-14px); opacity: 0.3; }
 }
 
 @media (max-width: 720px) {
-  .rv-games-preview {
-    height: 170px;
-  }
+  .rv-games-preview { height: 190px; }
+  .rv-games-rings { width: 120px; height: 120px; }
+  .rv-games-orbit { width: 170px; height: 170px; }
+  .rv-games-hex { width: 50px; height: 50px; }
 }

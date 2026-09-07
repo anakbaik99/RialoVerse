@@ -600,12 +600,19 @@ export default function Home() {
         </div>
 
         <div className="rv-games-preview rv-reveal">
-          <div className="rv-games-grid" />
           <div className="rv-games-scan" />
-          <div className="rv-games-tower rv-tower-1" />
-          <div className="rv-games-tower rv-tower-2" />
-          <div className="rv-games-tower rv-tower-3" />
-          <div className="rv-games-avatar" />
+          <div className="rv-games-rings">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div className="rv-games-hex" />
+          <div className="rv-games-orbit">
+            <div className="rv-games-orbit-dot" />
+          </div>
+          <div className="rv-games-particle p1" />
+          <div className="rv-games-particle p2" />
+          <div className="rv-games-particle p3" />
         </div>
 
         <div className="rv-games-cta rv-reveal">
