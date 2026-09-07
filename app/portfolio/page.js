@@ -59,6 +59,57 @@ function TokenIcon({ token, size = 22 }) {
   );
 }
 
+const DONUT_COLORS = { ETH: "#627eea", RIALO: "#d7ff1f", USDC: "#2775CA" };
+
+function DonutChart({ holdings }) {
+  const values = holdings.map((h) => Number(h.amount) || 0);
+  const total = values.reduce((a, b) => a + b, 0);
+  let cumulative = 0;
+  const stops = holdings
+    .map((h, i) => {
+      const pct = total > 0 ? (values[i] / total) * 100 : 0;
+      const start = cumulative;
+      cumulative += pct;
+      return `${DONUT_COLORS[h.token]} ${start}% ${cumulative}%`;
+    })
+    .join(", ");
+  const gradient = total > 0 ? `conic-gradient(${stops})` : "#2a2b3a";
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ width: 110, height: 110, borderRadius: "50%", background: gradient, position: "relative", flexShrink: 0 }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 13,
+            borderRadius: "50%",
+            background: "#0a0a0a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
+          <span style={{ color: "#8a8b9c", fontSize: 9, letterSpacing: 1 }}>ASSETS</span>
+          <span style={{ color: "#fff", fontSize: 18, fontWeight: 800 }}>{holdings.length}</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {holdings.map((h, i) => {
+          const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : "0.0";
+          return (
+            <div key={h.symbol} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: DONUT_COLORS[h.token], display: "inline-block", flexShrink: 0 }}></span>
+              <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{h.symbol}</span>
+              <span style={{ color: "#8a8b9c", fontSize: 12 }}>{pct}%</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function timeAgo(unixSeconds) {
   const seconds = Math.floor(Date.now() / 1000 - Number(unixSeconds));
   if (seconds < 60) return `${seconds}s ago`;
@@ -172,6 +223,7 @@ export default function PortfolioPage() {
               <h3 style={{ fontSize: 13, letterSpacing: 1, color: "#8a8b9c", marginBottom: 10, textTransform: "uppercase" }}>
                 Holdings
               </h3>
+              <DonutChart holdings={holdings} />
               <div style={{ background: "#111218", border: "2px solid #2a2b3a" }}>
                 {holdings.map((h, i) => (
                   <div
