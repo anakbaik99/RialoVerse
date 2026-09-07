@@ -809,8 +809,8 @@ export default function Home() {
         <div>
           <b>RESOURCES</b>
           <a href="/learn">Learn</a>
-          <a href="/learn">Docs</a>
-          <a href="https://github.com/fauzan83939/RialoVerse">
+          <a href="https://rialo.io/docs" target="_blank" rel="noopener noreferrer">Docs</a>
+          <a href="#ecosystem">
             GitHub
           </a>
         </div>
