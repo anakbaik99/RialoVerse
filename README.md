@@ -24,7 +24,6 @@ Live: https://rialoverse.vercel.app
 
 Install dependencies with npm install, then start the dev server with npm run dev.
 
-Open http://localhost:3000
 
 ## Network
 
