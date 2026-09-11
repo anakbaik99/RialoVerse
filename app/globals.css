@@ -2095,6 +2095,17 @@ body {
   box-shadow: 0 0 8px rgba(215, 255, 31, 0.35);
 }
 
+.rv-robot-bob {
+  position: absolute;
+  inset: 0;
+  animation: rv-robot-bounce 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes rv-robot-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
 .rv-robot-arm {
   position: absolute;
   top: 18px;
@@ -2103,10 +2114,10 @@ body {
   border-radius: 2px;
   background: #9fb01a;
   transform-origin: top center;
-  animation: rv-robot-swing 0.6s ease-in-out infinite alternate;
+  animation: rv-robot-swing 0.4s ease-in-out infinite alternate;
 }
 
-.rv-robot-arm-left { left: -3px; animation-delay: 0.3s; }
+.rv-robot-arm-left { left: -3px; animation-delay: 0.2s; }
 .rv-robot-arm-right { right: -3px; }
 
 .rv-robot-leg {
@@ -2117,15 +2128,15 @@ body {
   border-radius: 2px;
   background: #7a8a12;
   transform-origin: top center;
-  animation: rv-robot-swing 0.6s ease-in-out infinite alternate;
+  animation: rv-robot-swing 0.4s ease-in-out infinite alternate;
 }
 
 .rv-robot-leg-left { left: 5px; }
-.rv-robot-leg-right { left: 17px; animation-delay: 0.3s; }
+.rv-robot-leg-right { left: 17px; animation-delay: 0.2s; }
 
 @keyframes rv-robot-swing {
-  0% { transform: rotate(-18deg); }
-  100% { transform: rotate(18deg); }
+  0% { transform: rotate(-28deg); }
+  100% { transform: rotate(28deg); }
 }
 
 .rv-robot-shadow {

@@ -602,13 +602,15 @@ export default function Home() {
         <div className="rv-games-preview rv-reveal">
           <div className="rv-robot-floor" />
           <div className="rv-robot-walker">
-            <div className="rv-robot-antenna" />
-            <div className="rv-robot-head" />
-            <div className="rv-robot-body" />
-            <div className="rv-robot-arm rv-robot-arm-left" />
-            <div className="rv-robot-arm rv-robot-arm-right" />
-            <div className="rv-robot-leg rv-robot-leg-left" />
-            <div className="rv-robot-leg rv-robot-leg-right" />
+            <div className="rv-robot-bob">
+              <div className="rv-robot-antenna" />
+              <div className="rv-robot-head" />
+              <div className="rv-robot-body" />
+              <div className="rv-robot-arm rv-robot-arm-left" />
+              <div className="rv-robot-arm rv-robot-arm-right" />
+              <div className="rv-robot-leg rv-robot-leg-left" />
+              <div className="rv-robot-leg rv-robot-leg-right" />
+            </div>
             <div className="rv-robot-shadow" />
           </div>
         </div>
