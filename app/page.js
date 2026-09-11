@@ -600,19 +600,17 @@ export default function Home() {
         </div>
 
         <div className="rv-games-preview rv-reveal">
-          <div className="rv-games-scan" />
-          <div className="rv-games-rings">
-            <span></span>
-            <span></span>
-            <span></span>
+          <div className="rv-robot-floor" />
+          <div className="rv-robot-walker">
+            <div className="rv-robot-antenna" />
+            <div className="rv-robot-head" />
+            <div className="rv-robot-body" />
+            <div className="rv-robot-arm rv-robot-arm-left" />
+            <div className="rv-robot-arm rv-robot-arm-right" />
+            <div className="rv-robot-leg rv-robot-leg-left" />
+            <div className="rv-robot-leg rv-robot-leg-right" />
+            <div className="rv-robot-shadow" />
           </div>
-          <div className="rv-games-hex" />
-          <div className="rv-games-orbit">
-            <div className="rv-games-orbit-dot" />
-          </div>
-          <div className="rv-games-particle p1" />
-          <div className="rv-games-particle p2" />
-          <div className="rv-games-particle p3" />
         </div>
 
         <div className="rv-games-cta rv-reveal">
