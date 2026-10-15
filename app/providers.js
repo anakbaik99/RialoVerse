@@ -36,7 +36,7 @@ export function Providers({ children }) {
   const connect = useCallback(async () => {
     setError(null);
     if (!wallet) {
-      setError("Rialo Wallet belum terpasang di browser ini");
+      window.open("https://chromewebstore.google.com/detail/rialo-wallet/dbmgekigjgnahdnfgfpdognodiegpmcg", "_blank");
       return;
     }
     try {
