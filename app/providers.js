@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getWallets } from "@wallet-standard/core";
-import { RIALO_CHAIN } from "./rialo";
+import { RIALO_CHAIN } from "./wagmi";
 
 const WalletContext = createContext(null);
 
