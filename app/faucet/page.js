@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "../wallet-compat";
+import { useConnectModal, useAccountModal } from "../wallet-compat";
 import { formatUnits } from "viem";
 
 const TOKEN_ADDRESS = "0xEf601624E09126E369887D2845B68F4f9e968831";

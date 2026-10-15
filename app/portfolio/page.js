@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAccount, useBalance, useReadContract } from "wagmi";
-import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
+import { useAccount, useBalance, useReadContract } from "../wallet-compat";
+import { useConnectModal, useAccountModal } from "../wallet-compat";
 import { formatEther, formatUnits } from "viem";
 
 const TOKEN_ABI = [

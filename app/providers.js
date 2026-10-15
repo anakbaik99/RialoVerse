@@ -70,6 +70,8 @@ export function Providers({ children }) {
   );
 
   const value = {
+    openConnectModal: connect,
+    openAccountModal: disconnect,
     installed: !!wallet,
     isConnected: !!account,
     address: account?.address ?? null,

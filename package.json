@@ -8,19 +8,18 @@
     "start": "next start"
   },
   "dependencies": {
-    "@rainbow-me/rainbowkit": "^2.2.11",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@react-three/postprocessing": "^3.1.1",
+    "@rialo/ts-cdk": "^0.18.1",
+    "@rialo/wallet-standard": "^0.1.1",
     "@tanstack/react-query": "^5.102.8",
-    "@walletconnect/ethereum-provider": "^2.24.0",
+    "@wallet-standard/core": "^1.1.2",
     "next": "^15.4.0",
     "postprocessing": "^6.39.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "^0.185.1",
-    "viem": "^2.56.3",
-    "wagmi": "^2.19.5"
+    "three": "^0.185.1"
   },
   "overrides": {
     "qr": "0.5.0"

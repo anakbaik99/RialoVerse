@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, Suspense } from "react";
-import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
+import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "../wallet-compat";
+import { useConnectModal, useAccountModal } from "../wallet-compat";
 import { useSearchParams } from "next/navigation";
 import { parseEther, formatEther, parseUnits, formatUnits, decodeEventLog } from "viem";
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAccount, useReadContract } from "wagmi";
-import { useConnectModal, useAccountModal } from "@rainbow-me/rainbowkit";
+import { useAccount, useReadContract } from "./wallet-compat";
+import { useConnectModal, useAccountModal } from "./wallet-compat";
 import { formatEther, formatUnits } from "viem";
 
 const SWAP_ADDRESS = "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD";
