@@ -19,7 +19,8 @@
     "postprocessing": "^6.39.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "viem": "^2.57.7"
   },
   "overrides": {
     "qr": "0.5.0"
