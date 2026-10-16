@@ -55,7 +55,7 @@ export default function FaucetPage() {
       const res = await client.requestAirdrop(cdk.PublicKey.fromString(address), KELVIN_PER_RLO);
       const s = typeof res === "string"
         ? res
-        : (cdk.toBase58 ? cdk.toBase58(Uint8Array.from(res)) : String(res));
+        : toBase58(Uint8Array.from(res));
       setSig(s);
       setClaimBusy(false);
       for (let i = 0; i < 6; i++) {
