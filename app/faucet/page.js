@@ -4,6 +4,15 @@ import { useRialoWallet } from "../providers";
 
 const KELVIN_PER_RLO = 1000000000n; // 1 RIALO = 1e9 kelvin
 const EXPLORER_TX = "https://rialo-explorer-testnet-direct.vercel.app/txs/";
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function toBase58(bytes) {
+  let n = 0n;
+  for (const b of bytes) n = n * 256n + BigInt(b);
+  let s = "";
+  while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; }
+  for (const b of bytes) { if (b === 0) s = "1" + s; else break; }
+  return s;
+}
 
 let cdkPromise;
 function loadCdk() {
