@@ -83,7 +83,7 @@ function useAnimatedDots(active) {
 }
 
 export default function SwapPage() {
-  const { address, isConnected, connect, disconnect, signAndSend } = useRialoWallet();
+  const { address, isConnected, connect, disconnect, signAndSend, error: walletError } = useRialoWallet();
 
   const [fromToken, setFromToken] = useState("RIALO");
   const [toToken, setToToken] = useState("RVerse");
@@ -296,6 +296,7 @@ export default function SwapPage() {
         )}
 
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13 }}>{errorMsg}</p>}
+        {walletError && !isConnected && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13 }}>{walletError}</p>}
         {swapStep === "done" && <p style={{ color: "green", marginTop: 12, textAlign: "center" }}>Swap successful! ✅</p>}
       </div>
     </main>
