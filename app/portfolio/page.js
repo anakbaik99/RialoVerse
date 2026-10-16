@@ -1,34 +1,42 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useAccount, useBalance, useReadContract } from "../wallet-compat";
-import { useConnectModal, useAccountModal } from "../wallet-compat";
-import { formatEther, formatUnits } from "viem";
+import { useState, useEffect, useCallback } from "react";
+import { useRialoWallet } from "../providers";
 
-const TOKEN_ABI = [
-  { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
-];
+// ====== Konfigurasi Rialo Testnet ======
+const AMM_PROGRAM = "D6py9TbbsCTPABZfgpexc8fHXTsDG2x9eJivfzyR7pDi";
+const MINT = "7PrFhdj8oktWHXN7jvQHV2GBXjhFFYjH4rUEom1gZ5dz";
+const POOL_PDA = "5DdJ1354CHMdzj533QgW8ytLvV9pQ4JRuCoL9sg9zkSj";
+const VAULT_TOKEN = "ETx31zoDMa9DB247SZ7pQLms7AMRtRdmh38L2vwQFTFA";
+const TOKEN_2022 = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+const ATA_PROGRAM = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const EXPLORER_TX_BASE = "https://rialo-explorer-testnet-direct.vercel.app/txs/";
 
-const POOLS = {
-  RIALO: {
-    symbol: "RIALO",
-    decimals: 18,
-    tokenAddress: "0xEf601624E09126E369887D2845B68F4f9e968831",
-    iconLetter: "R",
-    iconBg: "#d7ff1f",
-    iconColor: "#0a0a0a",
-  },
-  USDC: {
-    symbol: "USDC",
-    decimals: 6,
-    tokenAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
-    iconLetter: "$",
-    iconBg: "#2775CA",
-    iconColor: "#fff",
-  },
+const TOKENS = {
+  RIALO: { iconLetter: "R", iconBg: "#d7ff1f", iconColor: "#0a0a0a" },
+  RVerse: { iconLetter: "V", iconBg: "#7c5cff", iconColor: "#fff" },
 };
+const DONUT_COLORS = { RIALO: "#d7ff1f", RVerse: "#7c5cff" };
 
-const EXPLORER_TX_BASE = "https://eth-sepolia.blockscout.com/tx/";
-const EXPLORER_API_BASE = "https://eth-sepolia.blockscout.com/api";
+let cdkPromise;
+function loadCdk() {
+  if (!cdkPromise) {
+    cdkPromise = import("@rialo/ts-cdk").then((cdk) => ({
+      cdk,
+      client: cdk.createRialoClient(cdk.getDefaultRialoClientConfig("testnet")),
+    }));
+  }
+  return cdkPromise;
+}
+
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function toBase58(bytes) {
+  let n = 0n;
+  for (const b of bytes) n = n * 256n + BigInt(b);
+  let s = "";
+  while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; }
+  for (const b of bytes) { if (b === 0) s = "1" + s; else break; }
+  return s;
+}
 
 function formatNice(numStr, maxDecimals = 6) {
   const n = Number(numStr);
@@ -39,19 +47,7 @@ function formatNice(numStr, maxDecimals = 6) {
 }
 
 function TokenIcon({ token, size = 22 }) {
-  if (token === "ETH") {
-    return (
-      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "#627eea", flexShrink: 0 }}>
-        <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none">
-          <path d="M12 1L4 12.5L12 17L20 12.5L12 1Z" fill="#fff" fillOpacity="0.85" />
-          <path d="M12 18.3L4 13.6L12 23L20 13.6L12 18.3Z" fill="#fff" />
-          <path d="M12 1L4 12.5L12 16V1Z" fill="#fff" />
-          <path d="M12 18.3V23L4 13.6L12 18.3Z" fill="#fff" fillOpacity="0.6" />
-        </svg>
-      </span>
-    );
-  }
-  const cfg = POOLS[token];
+  const cfg = TOKENS[token];
   return (
     <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: cfg.iconBg, color: cfg.iconColor, fontSize: size * 0.5, fontWeight: 800, flexShrink: 0 }}>
       {cfg.iconLetter}
@@ -59,10 +55,8 @@ function TokenIcon({ token, size = 22 }) {
   );
 }
 
-const DONUT_COLORS = { ETH: "#627eea", RIALO: "#d7ff1f", USDC: "#2775CA" };
-
 function DonutChart({ holdings }) {
-  const values = holdings.map((h) => Number(h.amount) || 0);
+  const values = holdings.map((h) => Number(h.value) || 0);
   const total = values.reduce((a, b) => a + b, 0);
   let cumulative = 0;
   const stops = holdings
@@ -78,18 +72,7 @@ function DonutChart({ holdings }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 20, flexWrap: "wrap" }}>
       <div style={{ width: 110, height: 110, borderRadius: "50%", background: gradient, position: "relative", flexShrink: 0 }}>
-        <div
-          style={{
-            position: "absolute",
-            inset: 13,
-            borderRadius: "50%",
-            background: "#0a0a0a",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-          }}
-        >
+        <div style={{ position: "absolute", inset: 13, borderRadius: "50%", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
           <span style={{ color: "#8a8b9c", fontSize: 9, letterSpacing: 1 }}>ASSETS</span>
           <span style={{ color: "#fff", fontSize: 18, fontWeight: 800 }}>{holdings.length}</span>
         </div>
@@ -111,7 +94,8 @@ function DonutChart({ holdings }) {
 }
 
 function timeAgo(unixSeconds) {
-  const seconds = Math.floor(Date.now() / 1000 - Number(unixSeconds));
+  if (!unixSeconds) return "";
+  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - Number(unixSeconds)));
   if (seconds < 60) return `${seconds}s ago`;
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -121,67 +105,81 @@ function timeAgo(unixSeconds) {
   return `${days}d ago`;
 }
 
-export default function PortfolioPage() {
-  const { address, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
-  const { openAccountModal } = useAccountModal();
+const toUnits = (str, dec) => {
+  const [w, f = ""] = String(str).split(".");
+  return BigInt(w || "0") * 10n ** BigInt(dec) + BigInt((f + "0".repeat(dec)).slice(0, dec) || "0");
+};
 
+export default function PortfolioPage() {
+  const { address, isConnected, connect, disconnect } = useRialoWallet();
+
+  const [rialo, setRialo] = useState(0n);   // kelvin
+  const [rverse, setRverse] = useState(0n); // satuan 1e6
+  const [price, setPrice] = useState(0);    // 1 RVerse dalam RIALO (dari pool)
   const [txs, setTxs] = useState([]);
   const [txLoading, setTxLoading] = useState(false);
   const [txError, setTxError] = useState("");
 
-  const { data: ethBalance } = useBalance({ address, query: { enabled: !!address } });
-  const { data: rialoBalance } = useReadContract({
-    address: POOLS.RIALO.tokenAddress,
-    abi: TOKEN_ABI,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-    query: { enabled: !!address },
-  });
-  const { data: usdcBalance } = useReadContract({
-    address: POOLS.USDC.tokenAddress,
-    abi: TOKEN_ABI,
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-    query: { enabled: !!address },
-  });
+  const loadHoldings = useCallback(async () => {
+    if (!address) { setRialo(0n); setRverse(0n); return; }
+    try {
+      const { cdk, client } = await loadCdk();
+      const P = (s) => cdk.PublicKey.fromString(s);
+      const owner = P(address);
+      try { setRialo(BigInt(await client.getBalance(owner))); } catch {}
+      try {
+        const [ata] = cdk.PublicKey.findProgramAddress([owner.toBytes(), P(TOKEN_2022).toBytes(), P(MINT).toBytes()], P(ATA_PROGRAM));
+        setRverse(toUnits((await client.getTokenAccountBalance(ata)).uiAmountString, 6));
+      } catch { setRverse(0n); }
+      try {
+        const poolRialo = Number(BigInt(await client.getBalance(P(POOL_PDA)))) / 1e9;
+        const poolToken = Number(toUnits((await client.getTokenAccountBalance(P(VAULT_TOKEN))).uiAmountString, 6)) / 1e6;
+        setPrice(poolToken > 0 ? poolRialo / poolToken : 0);
+      } catch {}
+    } catch {}
+  }, [address]);
 
-  const holdings = [
-    { symbol: "ETH", token: "ETH", amount: ethBalance ? formatNice(formatEther(ethBalance.value), 5) : "0" },
-    { symbol: "RIALO", token: "RIALO", amount: rialoBalance ? formatNice(formatUnits(rialoBalance, POOLS.RIALO.decimals), 2) : "0" },
-    { symbol: "USDC", token: "USDC", amount: usdcBalance ? formatNice(formatUnits(usdcBalance, POOLS.USDC.decimals), 2) : "0" },
-  ];
+  useEffect(() => { loadHoldings(); }, [loadHoldings]);
 
   useEffect(() => {
-    if (!address) {
-      setTxs([]);
-      return;
-    }
+    if (!address) { setTxs([]); return; }
     let cancelled = false;
     setTxLoading(true);
     setTxError("");
-
-    fetch(`${EXPLORER_API_BASE}?module=account&action=txlist&address=${address}&sort=desc`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return;
-        if (data.status === "1" && Array.isArray(data.result)) {
-          setTxs(data.result.slice(0, 15));
-        } else {
-          setTxs([]);
+    (async () => {
+      try {
+        const { cdk, client } = await loadCdk();
+        const sigs = await client.getSignaturesForAddress(cdk.PublicKey.fromString(address), { limit: 10 });
+        const out = [];
+        for (const s of sigs) {
+          const sigStr = typeof s.signature === "string" ? s.signature : toBase58(Uint8Array.from(s.signature));
+          let kind = "Other", ok = !s.err;
+          try {
+            const tx = await client.queryClient.call("getTransaction", [{ signature: s.signature }]);
+            const logs = tx?.meta?.logMessages || [];
+            ok = !tx?.meta?.err;
+            if (logs.some((l) => l.includes(AMM_PROGRAM))) kind = "Swap";
+            else if (logs.some((l) => l.includes("TransferChecked"))) kind = "Transfer RVerse";
+            else if (logs.length) kind = "Transfer RIALO";
+          } catch {}
+          out.push({ sig: sigStr, ok, kind, blockTime: s.blockTime ? Number(s.blockTime) : null });
         }
-      })
-      .catch(() => {
-        if (!cancelled) setTxError("Gagal mengambil riwayat transaksi.");
-      })
-      .finally(() => {
+        if (!cancelled) setTxs(out);
+      } catch {
+        if (!cancelled) setTxError("Failed to load transaction history.");
+      } finally {
         if (!cancelled) setTxLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      }
+    })();
+    return () => { cancelled = true; };
   }, [address]);
+
+  const rialoAmt = Number(rialo) / 1e9;
+  const rverseAmt = Number(rverse) / 1e6;
+  const holdings = [
+    { symbol: "RIALO", token: "RIALO", amount: formatNice(rialoAmt, 4), value: rialoAmt },
+    { symbol: "RVerse", token: "RVerse", amount: formatNice(rverseAmt, 2), value: rverseAmt * price },
+  ];
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 16, background: "#0a0a0a", boxSizing: "border-box", gap: 16 }}>
@@ -194,48 +192,31 @@ export default function PortfolioPage() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-          <span style={{ fontSize: 11, color: "#8a8b9c", letterSpacing: 1 }}>SEPOLIA TESTNET</span>
+          <span style={{ fontSize: 11, color: "#8a8b9c", letterSpacing: 1 }}>RIALO TESTNET</span>
         </div>
 
         {!isConnected ? (
           <div style={{ background: "#111218", border: "2px solid #d7ff1f", padding: 30, textAlign: "center" }}>
             <p style={{ color: "#8a8b9c", marginBottom: 16 }}>Connect your wallet to see your portfolio.</p>
-            <button
-              onClick={openConnectModal}
-              style={{ padding: "12px 24px", borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer" }}
-            >
+            <button onClick={connect} style={{ padding: "12px 24px", borderRadius: 12, background: "#d7ff1f", color: "#0a0a0a", border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
               Connect Wallet
             </button>
           </div>
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-              <button
-                onClick={openAccountModal}
-                style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}
-              >
+              <button onClick={disconnect} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}>
                 {address.slice(0, 6)}...{address.slice(-4)}
               </button>
             </div>
 
             {/* HOLDINGS */}
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 13, letterSpacing: 1, color: "#8a8b9c", marginBottom: 10, textTransform: "uppercase" }}>
-                Holdings
-              </h3>
+              <h3 style={{ fontSize: 13, letterSpacing: 1, color: "#8a8b9c", marginBottom: 10, textTransform: "uppercase" }}>Holdings</h3>
               <DonutChart holdings={holdings} />
               <div style={{ background: "#111218", border: "2px solid #2a2b3a" }}>
                 {holdings.map((h, i) => (
-                  <div
-                    key={h.symbol}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "14px 16px",
-                      borderBottom: i < holdings.length - 1 ? "1px solid #2a2b3a" : "none",
-                    }}
-                  >
+                  <div key={h.symbol} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: i < holdings.length - 1 ? "1px solid #2a2b3a" : "none" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <TokenIcon token={h.token} size={26} />
                       <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>{h.symbol}</span>
@@ -248,54 +229,29 @@ export default function PortfolioPage() {
 
             {/* TRANSACTION HISTORY */}
             <div>
-              <h3 style={{ fontSize: 13, letterSpacing: 1, color: "#8a8b9c", marginBottom: 10, textTransform: "uppercase" }}>
-                Transaction History
-              </h3>
+              <h3 style={{ fontSize: 13, letterSpacing: 1, color: "#8a8b9c", marginBottom: 10, textTransform: "uppercase" }}>Transaction History</h3>
 
-              {txLoading && <p style={{ color: "#8a8b9c", fontSize: 13, textAlign: "center", padding: 20 }}>Memuat transaksi...</p>}
+              {txLoading && <p style={{ color: "#8a8b9c", fontSize: 13, textAlign: "center", padding: 20 }}>Loading transactions...</p>}
               {txError && <p style={{ color: "#ff4d4d", fontSize: 13, textAlign: "center", padding: 20 }}>{txError}</p>}
               {!txLoading && !txError && txs.length === 0 && (
-                <p style={{ color: "#8a8b9c", fontSize: 13, textAlign: "center", padding: 20 }}>Belum ada transaksi di Sepolia.</p>
+                <p style={{ color: "#8a8b9c", fontSize: 13, textAlign: "center", padding: 20 }}>No transactions yet on Rialo Testnet.</p>
               )}
 
               {!txLoading && txs.length > 0 && (
                 <div style={{ background: "#111218", border: "2px solid #2a2b3a" }}>
-                  {txs.map((tx, i) => {
-                    const isOutgoing = tx.from?.toLowerCase() === address?.toLowerCase();
-                    const valueEth = formatNice(formatEther(BigInt(tx.value || "0")), 5);
-                    return (
-                      <a
-                        key={tx.hash}
-                        href={`${EXPLORER_TX_BASE}${tx.hash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "14px 16px",
-                          borderBottom: i < txs.length - 1 ? "1px solid #2a2b3a" : "none",
-                          textDecoration: "none",
-                          color: "inherit",
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: isOutgoing ? "#ff8a8a" : "#8affa0" }}>
-                            {isOutgoing ? "Sent" : "Received"}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#8a8b9c", marginTop: 2 }}>
-                            {tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>
-                            {Number(valueEth) > 0 ? `${valueEth} ETH` : "Contract call"}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#8a8b9c", marginTop: 2 }}>{timeAgo(tx.timeStamp)}</div>
-                        </div>
-                      </a>
-                    );
-                  })}
+                  {txs.map((tx, i) => (
+                    <a key={tx.sig} href={`${EXPLORER_TX_BASE}${tx.sig}`} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: i < txs.length - 1 ? "1px solid #2a2b3a" : "none", textDecoration: "none", color: "inherit" }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: tx.kind === "Swap" ? "#d7ff1f" : "#fff" }}>{tx.kind}</div>
+                        <div style={{ fontSize: 11, color: "#8a8b9c", marginTop: 2 }}>{tx.sig.slice(0, 8)}...{tx.sig.slice(-6)}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: tx.ok ? "#8affa0" : "#ff8a8a" }}>{tx.ok ? "Success" : "Failed"}</div>
+                        <div style={{ fontSize: 11, color: "#8a8b9c", marginTop: 2 }}>{timeAgo(tx.blockTime)}</div>
+                      </div>
+                    </a>
+                  ))}
                 </div>
               )}
             </div>
@@ -305,3 +261,4 @@ export default function PortfolioPage() {
     </main>
   );
 }
+
