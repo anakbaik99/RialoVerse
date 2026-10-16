@@ -11,11 +11,11 @@ const FEE_BUFFER = 0.01; // sisakan sedikit RIALO untuk biaya transaksi
 
 // Urutan sama dengan program: 0 = 5x, 1 = 10x, 2 = 1.5x, 3 = LOSE, 4 = 2x
 const SEGMENTS = [
-  { label: "5x", pct: 8, color: "#f0b90b" },
-  { label: "10x", pct: 2, color: "#fb923c" },
-  { label: "1.5x", pct: 30, color: "#f87171" },
-  { label: "LOSE", pct: 35, color: "#4b5563" },
-  { label: "2x", pct: 25, color: "#60a5fa" },
+  { label: "5x", pct: 8, color: "#d7ff1f", text: "#0a0a0a" },
+  { label: "10x", pct: 2, color: "#ffb85f", text: "#0a0a0a" },
+  { label: "1.5x", pct: 30, color: "#5fd0ff", text: "#0a0a0a" },
+  { label: "LOSE", pct: 35, color: "#2a2b3a", text: "#ffffff" },
+  { label: "2x", pct: 25, color: "#ff5f7a", text: "#0a0a0a" },
 ];
 
 let cdkPromise;
@@ -199,120 +199,127 @@ export default function RialoWheelPage() {
     : phase === "spinning" ? "Spinning..."
     : "SPIN";
 
-  const card = { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 32, padding: 28, boxSizing: "border-box", width: "100%", maxWidth: 520 };
-  const quick = { flex: 1, padding: "14px 0", borderRadius: 18, border: "1px solid #e5e7eb", background: "#fafafa", color: "#0d9488", fontFamily: "ui-monospace, monospace", fontSize: 15, cursor: "pointer" };
+  const panel = { width: "100%", maxWidth: 420, background: "#111218", border: "2px solid #d7ff1f", padding: 20, boxSizing: "border-box" };
+  const panelDim = { ...panel, border: "2px solid #2a2b3a" };
+  const quick = { flex: 1, padding: "8px 0", fontSize: 12, fontWeight: 600, borderRadius: 8, border: "2px solid #2a2b3a", background: "#0a0a0a", color: "#d7ff1f", cursor: "pointer" };
+  const muted = { color: "#8a8b9c" };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", color: "#111827", fontFamily: "system-ui, sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');`}</style>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 16, background: "#0a0a0a", color: "#fff", boxSizing: "border-box", gap: 16 }}>
+      <div style={{ width: "100%", maxWidth: 420, display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+        <a href="/games" style={{ textDecoration: "none", fontWeight: 700 }}><span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span></a>
+        <h2 style={{ margin: 0, fontSize: 20 }}>Rialo Wheel</h2>
+      </div>
 
-      <header style={{ background: "#000", padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontFamily: "Orbitron, system-ui, sans-serif", fontWeight: 700, fontSize: 28, color: "#e8ffe8", textShadow: "0 0 12px #22ff55, 0 0 24px #22ff55" }}>Rialo Wheel</span>
-        <a href="/games" style={{ background: "#1d9bf0", color: "#fff", padding: "14px 28px", borderRadius: 18, textDecoration: "none", fontSize: 20, boxShadow: "0 0 16px #1d9bf0" }}>Back</a>
-      </header>
-
-      <main style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 16px", gap: 28 }}>
-        <div style={{ textAlign: "center" }}>
-          <h1 style={{ margin: 0, fontSize: 44, fontWeight: 900, color: "#111a2e" }}>RIALO WHEEL</h1>
-          <p style={{ margin: "14px 0 0", fontSize: 20, color: "#4b5563" }}>Spin to win on Rialo Testnet</p>
+      {/* WHEEL */}
+      <div style={{ ...panel, textAlign: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <span style={{ fontSize: 11, letterSpacing: 1, ...muted }}>RIALO TESTNET</span>
+          {isConnected && (
+            <span style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600 }}>
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </span>
+          )}
         </div>
 
-        <div style={{ width: "100%", maxWidth: 520, display: "flex", justifyContent: "flex-end" }}>
-          <span style={{ border: "1px solid #e5e7eb", background: "#f3f4f6", borderRadius: 999, padding: "16px 28px", fontFamily: "ui-monospace, monospace", color: "#6b7280", fontSize: 18 }}>
-            {isConnected ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
-          </span>
+        <div style={{ position: "relative", width: "100%", maxWidth: 340, margin: "0 auto" }}>
+          <div style={{ position: "absolute", left: "50%", top: -8, transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "14px solid transparent", borderRight: "14px solid transparent", borderTop: "24px solid #fff", zIndex: 2, filter: "drop-shadow(0 0 6px #d7ff1f)" }} />
+          <svg viewBox="0 0 400 400" style={{ width: "100%", display: "block", transform: `rotate(${rotation}deg)`, transition: phase === "spinning" ? "transform 4.5s cubic-bezier(0.12, 0.6, 0.1, 1)" : "none" }}>
+            <circle cx="200" cy="200" r="197" fill="#0a0a0a" stroke="#d7ff1f" strokeWidth="4" />
+            {SEGMENTS.map((s, i) => {
+              const [lx, ly] = polar(i * 72 + 36, 122);
+              return (
+                <g key={s.label}>
+                  <path d={slicePath(i)} fill={s.color} stroke="#0a0a0a" strokeWidth="3" />
+                  <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="26" fontWeight="800" fill={s.text} transform={`rotate(${i * 72 + 36 - 90} ${lx} ${ly})`}>{s.label}</text>
+                </g>
+              );
+            })}
+          </svg>
+          <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "24%", aspectRatio: "1", borderRadius: "50%", background: "#0a0a0a", border: "3px solid #d7ff1f", display: "flex", alignItems: "center", justifyContent: "center", color: "#d7ff1f", fontWeight: 800, fontSize: 13, letterSpacing: 0.5 }}>RIALO</div>
         </div>
 
-        {/* BET */}
-        <div style={card}>
-          <div style={{ display: "flex", justifyContent: "space-between", color: "#4b5563", fontSize: 20, marginBottom: 14 }}>
-            <span>Bet Amount</span>
+        <p style={{ fontSize: 13, marginTop: 18, marginBottom: 0, ...muted }}>Pool balance: <span style={{ color: "#fff", fontWeight: 600 }}>{fmt(pool, 2)} RIALO</span></p>
+      </div>
+
+      {/* BET */}
+      <div style={panel}>
+        <div style={{ background: "#15161f", padding: 14, marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, ...muted }}>
+            <label>Bet Amount</label>
             <span>Balance: {fmt(balance, 4)} RIALO</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 24, padding: "18px 22px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, minWidth: 0 }}>
             <input type="text" inputMode="decimal" placeholder="0.0" value={bet} disabled={busy}
               onChange={(e) => setBet(sanitizeDecimalInput(e.target.value))}
-              style={{ flex: 1, minWidth: 0, border: "none", background: "transparent", outline: "none", fontSize: 44, color: "#111827" }} />
-            <span style={{ fontWeight: 700, fontSize: 22, color: "#1f2937" }}>RIALO</span>
+              style={{ flex: "1 1 0%", minWidth: 0, width: 0, border: "none", background: "transparent", fontSize: 22, outline: "none", color: "#fff" }} />
+            <span style={{ background: "#0a0a0a", border: "2px solid #2a2b3a", padding: "6px 10px", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>RIALO</span>
           </div>
-          <p style={{ color: "#6b7280", fontSize: 17, margin: "14px 0" }}>Min: {MIN_BET.toFixed(1)} RIALO • Max: {MAX_BET.toFixed(1)} RIALO</p>
-          <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-            {[1, 5, 10, 25].map((m) => (
-              <button key={m} style={quick} disabled={busy} onClick={() => setBet(String(MIN_BET * m))}>{m}x min</button>
-            ))}
-          </div>
-          <button style={{ ...quick, width: "100%", flex: "none", background: "#e6f4f1", border: "1px solid #99d6cc" }} disabled={busy}
-            onClick={() => setBet(String(Math.floor(maxAllowed * 100) / 100))}>Max Bet</button>
-
-          <button onClick={!isConnected ? connect : handleSpin} disabled={busy}
-            style={{ width: "100%", marginTop: 28, padding: "24px 0", borderRadius: 28, border: "none", background: busy ? "#5eaaa0" : "#0d9488", color: "#0b1b2b", fontSize: 26, fontWeight: 700, cursor: busy ? "not-allowed" : "pointer" }}>
-            {buttonLabel}
-          </button>
-
-          {errorMsg && <p style={{ color: "#dc2626", marginTop: 16, fontSize: 16, wordBreak: "break-word" }}>{errorMsg}</p>}
-          {result && (
-            <p style={{ marginTop: 16, fontSize: 20, fontWeight: 700, textAlign: "center", color: result.payout > 0 ? "#059669" : "#6b7280" }}>
-              {result.payout > 0 ? `${SEGMENTS[result.seg].label} — you won ${fmt(result.payout, 4)} RIALO!` : "LOSE — better luck next time"}
-            </p>
-          )}
-
-          <div style={{ borderTop: "1px solid #e5e7eb", marginTop: 28, paddingTop: 22 }}>
-            <div style={{ color: "#6b7280", fontWeight: 700, letterSpacing: 1, fontSize: 18, marginBottom: 14 }}>WHEEL SEGMENTS</div>
-            {SEGMENTS.map((s) => (
-              <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", fontSize: 22 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <i style={{ width: 22, height: 22, borderRadius: "50%", background: s.color, display: "inline-block" }} />{s.label}
-                </span>
-                <span style={{ color: "#4b5563" }}>{s.pct}%</span>
-              </div>
-            ))}
-          </div>
+          <div style={{ fontSize: 11, marginTop: 8, ...muted }}>Min {MIN_BET} • Max {MAX_BET} RIALO</div>
         </div>
 
-        {/* WHEEL */}
-        <div style={{ ...card, textAlign: "center" }}>
-          <div style={{ position: "relative", width: "100%", maxWidth: 400, margin: "0 auto" }}>
-            <div style={{ position: "absolute", left: "50%", top: -6, transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "20px solid transparent", borderRight: "20px solid transparent", borderTop: "34px solid #f97316", zIndex: 2 }} />
-            <svg viewBox="0 0 400 400" style={{ width: "100%", display: "block", transform: `rotate(${rotation}deg)`, transition: phase === "spinning" ? "transform 4.5s cubic-bezier(0.12, 0.6, 0.1, 1)" : "none" }}>
-              <circle cx="200" cy="200" r="198" fill="#131a17" />
-              {SEGMENTS.map((s, i) => {
-                const [lx, ly] = polar(i * 72 + 36, 120);
-                return (
-                  <g key={s.label}>
-                    <path d={slicePath(i)} fill={s.color} />
-                    <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="26" fontWeight="800" fill="#111" transform={`rotate(${i * 72 + 36 - 90} ${lx} ${ly})`}>{s.label}</text>
-                  </g>
-                );
-              })}
-            </svg>
-            <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "17%", aspectRatio: "1", borderRadius: "50%", background: "#fff", border: "4px solid #0d9488", display: "flex", alignItems: "center", justifyContent: "center", color: "#0d9488", fontWeight: 800, fontSize: 18 }}>RIALO</div>
-          </div>
-          <p style={{ color: "#6b7280", fontSize: 18, marginTop: 24 }}>Pool balance: {fmt(pool, 2)} RIALO</p>
-        </div>
-
-        {/* HISTORY */}
-        <div style={card}>
-          <h3 style={{ margin: "0 0 18px", fontSize: 24 }}>Your Recent Spins</h3>
-          {!isConnected && <p style={{ color: "#6b7280", fontSize: 18 }}>Connect your wallet to see your spin history.</p>}
-          {isConnected && history.length === 0 && <p style={{ color: "#6b7280", fontSize: 18 }}>No spins yet.</p>}
-          {history.map((h) => (
-            <a key={h.sig} href={`https://rialo-explorer-testnet-direct.vercel.app/txs/${h.sig}`} target="_blank" rel="noreferrer"
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderTop: "1px solid #f3f4f6", textDecoration: "none", color: "inherit" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 12, fontWeight: 700, fontSize: 18 }}>
-                <i style={{ width: 16, height: 16, borderRadius: "50%", background: SEGMENTS[h.seg]?.color, display: "inline-block" }} />
-                {SEGMENTS[h.seg]?.label}
-              </span>
-              <span style={{ textAlign: "right", fontSize: 15 }}>
-                <div style={{ color: h.payout > 0 ? "#059669" : "#6b7280", fontWeight: 700 }}>
-                  {h.payout > 0 ? `+${fmt(h.payout - h.bet, 4)}` : `-${fmt(h.bet, 4)}`} RIALO
-                </div>
-                <div style={{ color: "#9ca3af" }}>bet {fmt(h.bet, 2)} • {timeAgo(h.blockTime)}</div>
-              </span>
-            </a>
+        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+          {[1, 5, 10, 25].map((m) => (
+            <button key={m} style={quick} disabled={busy} onClick={() => setBet(String(MIN_BET * m))}>{m}x min</button>
           ))}
         </div>
-      </main>
-    </div>
+        <button style={{ ...quick, width: "100%", flex: "none", marginBottom: 14 }} disabled={busy}
+          onClick={() => setBet(String(Math.floor(maxAllowed * 100) / 100))}>MAX BET</button>
+
+        <button onClick={!isConnected ? connect : handleSpin} disabled={busy}
+          className={busy ? "rialo-pulsing" : ""}
+          style={{ width: "100%", padding: 14, borderRadius: 12, background: busy ? "#333" : "#d7ff1f", color: busy ? "#888" : "#0a0a0a", border: "none", fontWeight: 700, fontSize: 16, cursor: busy ? "not-allowed" : "pointer" }}>
+          {buttonLabel}
+        </button>
+
+        {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13, wordBreak: "break-word" }}>{errorMsg}</p>}
+        {result && (
+          <p style={{ marginTop: 12, fontSize: 15, fontWeight: 700, textAlign: "center", color: result.payout > 0 ? "#d7ff1f" : "#8a8b9c" }}>
+            {result.payout > 0 ? `${SEGMENTS[result.seg].label} — you won ${fmt(result.payout, 4)} RIALO!` : "LOSE — better luck next time"}
+          </p>
+        )}
+      </div>
+
+      {/* SEGMENTS */}
+      <div style={panelDim}>
+        <h3 style={{ fontSize: 13, letterSpacing: 1, margin: "0 0 10px", textTransform: "uppercase", ...muted }}>Wheel Segments</h3>
+        {SEGMENTS.map((s, i) => (
+          <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderTop: i ? "1px solid #2a2b3a" : "none", fontSize: 14 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 600 }}>
+              <i style={{ width: 12, height: 12, borderRadius: "50%", background: s.color, display: "inline-block", border: "1px solid #3a3b4a" }} />{s.label}
+            </span>
+            <span style={muted}>{s.pct}%</span>
+          </div>
+        ))}
+      </div>
+
+      {/* HISTORY */}
+      <div style={{ ...panelDim, marginBottom: 24 }}>
+        <h3 style={{ fontSize: 13, letterSpacing: 1, margin: "0 0 10px", textTransform: "uppercase", ...muted }}>Your Recent Spins</h3>
+        {!isConnected && <p style={{ fontSize: 13, margin: 0, ...muted }}>Connect your wallet to see your spin history.</p>}
+        {isConnected && history.length === 0 && <p style={{ fontSize: 13, margin: 0, ...muted }}>No spins yet.</p>}
+        {history.map((h, i) => (
+          <a key={h.sig} href={`https://rialo-explorer-testnet-direct.vercel.app/txs/${h.sig}`} target="_blank" rel="noreferrer"
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderTop: i ? "1px solid #2a2b3a" : "none", textDecoration: "none", color: "inherit" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 14 }}>
+              <i style={{ width: 12, height: 12, borderRadius: "50%", background: SEGMENTS[h.seg]?.color, display: "inline-block", border: "1px solid #3a3b4a" }} />
+              {SEGMENTS[h.seg]?.label}
+            </span>
+            <span style={{ textAlign: "right", fontSize: 12 }}>
+              <div style={{ color: h.payout > 0 ? "#d7ff1f" : "#8a8b9c", fontWeight: 700, fontSize: 13 }}>
+                {h.payout > 0 ? `+${fmt(h.payout - h.bet, 4)}` : `-${fmt(h.bet, 4)}`} RIALO
+              </div>
+              <div style={muted}>bet {fmt(h.bet, 2)} • {timeAgo(h.blockTime)}</div>
+            </span>
+          </a>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes rialoPulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
+        .rialo-pulsing { animation: rialoPulse 1.1s ease-in-out infinite; }
+      `}</style>
+    </main>
   );
 }
 
