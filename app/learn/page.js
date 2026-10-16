@@ -8,23 +8,23 @@ const TOPICS = [
     title: "Connecting Your Wallet",
     intro: "How RialoVerse links to your wallet safely, without ever touching your funds.",
     points: [
-      "Supports MetaMask, WalletConnect, Rainbow, and other wallets via RainbowKit.",
+      "Works with the Rialo Wallet browser extension on Rialo Testnet.",
       "Connecting only reads your public wallet address - it never asks for your seed phrase or private key.",
       "No funds move when you connect. Transactions only happen when you explicitly approve a swap or claim.",
-      "On mobile, tapping a wallet option deep-links into that wallet's app; on desktop, it opens the browser extension.",
+      "If your wallet is locked, unlock it first, then press Connect again to approve the connection request.",
     ],
   },
   {
     id: "swap",
     label: "Swap",
-    title: "Swapping ETH & RIALO",
-    intro: "An automated market maker (AMM) pool lets you trade ETH and RIALO instantly on Sepolia testnet.",
+    title: "Swapping RIALO & RVerse",
+    intro: "An automated market maker (AMM) pool lets you trade RIALO and RVerse instantly on Rialo Testnet.",
     points: [
       "Uses a constant-product formula (like Uniswap) with a 0.3% pool fee on every trade.",
       "Price impact shows how much your trade will move the pool price - larger trades relative to pool size move the price more.",
       "Slippage tolerance (0.5% / 1% / 3%) protects you: the swap fails instead of executing at a worse price than expected.",
-      "Swapping RIALO to ETH requires an approval transaction first, so the swap contract can move your tokens.",
-      "Every swap is recorded on-chain and shown in your Recent Swaps history.",
+      "No approval step is needed: each swap is a single transaction that you confirm in your wallet.",
+      "Every swap is recorded on-chain and shown in your Portfolio transaction history.",
     ],
   },
   {
@@ -33,10 +33,10 @@ const TOPICS = [
     title: "Claiming Free RIALO",
     intro: "Get test tokens to try out RialoVerse without spending real funds.",
     points: [
-      "Claim 50 RIALO for free, once every 24 hours.",
-      "The cooldown is tracked on-chain per wallet address, not per device or browser.",
-      "Claiming only costs a small amount of Sepolia testnet ETH for gas - RIALO itself is free.",
-      "If the faucet balance runs low, claims are paused until it's refilled.",
+      "Claim free RIALO test tokens from the official Rialo faucet.",
+      "If the faucet limits how often you can claim, the page shows its message.",
+      "Claiming does not need a wallet signature, and RIALO from the faucet is what you use to swap for RVerse.",
+      "Use your RIALO on the Swap page to get RVerse, then check both balances on the Portfolio page.",
     ],
   },
   {
@@ -46,7 +46,7 @@ const TOPICS = [
     intro: "An AI chat assistant powered by Google Gemini that understands RialoVerse and can help you take action.",
     points: [
       "Ask COMI anything about RialoVerse, Swap, the Faucet, or the wider Rialo Network ecosystem.",
-      "Tell it what you want in plain language, like 'swap 0.01 eth to rialo' or 'claim faucet'.",
+      "Tell it what you want in plain language, like 'swap 0.01 rialo to rverse' or 'claim faucet'.",
       "COMI never signs transactions for you - it hands you off to the Swap or Faucet page with the details pre-filled, and you approve everything yourself in your wallet.",
       "If COMI doesn't know something, it will say so instead of guessing.",
     ],

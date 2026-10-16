@@ -96,6 +96,15 @@ export default function SwapPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const swapDots = useAnimatedDots(swapBusy);
 
+  // Isi awal dari tautan, mis. /swap?from=RIALO&to=RVerse&amount=0.01 (dipakai COMI)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const norm = (x) => TOKEN_LIST.find((k) => k.toLowerCase() === (x || "").toLowerCase());
+    const f = norm(q.get("from")), t = norm(q.get("to")), a = q.get("amount");
+    if (f && t && f !== t) { setFromToken(f); setToToken(t); }
+    if (a && /^[0-9]*\.?[0-9]*$/.test(a)) setAmountIn(a);
+  }, []);
+
   const refresh = useCallback(async () => {
     try {
       const { cdk, client } = await loadCdk();
