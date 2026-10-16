@@ -3,26 +3,9 @@
 import { useEffect, useState } from "react";
 import { useAccount, useReadContract } from "./wallet-compat";
 import { useConnectModal, useAccountModal } from "./wallet-compat";
-import { formatEther, formatUnits } from "viem";
 
-const SWAP_ADDRESS = "0x2697Dc3195Fc5B37047D5E50C2f22a016cF4e2CD";
-
-const SWAP_ABI = [
-  {
-    name: "getEthReserve",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "uint256" }],
-  },
-  {
-    name: "getTokenReserve",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "uint256" }],
-  },
-];
+const POOL_PDA = "5DdJ1354CHMdzj533QgW8ytLvV9pQ4JRuCoL9sg9zkSj";
+const VAULT_TOKEN = "ETx31zoDMa9DB247SZ7pQLms7AMRtRdmh38L2vwQFTFA";
 
 const features = [
   {
@@ -149,23 +132,25 @@ export default function Home() {
   const { openConnectModal } = useConnectModal();
   const { openAccountModal } = useAccountModal();
 
-  const { data: ethReserve } = useReadContract({
-    address: SWAP_ADDRESS,
-    abi: SWAP_ABI,
-    functionName: "getEthReserve",
-  });
+  // harga 1 RVerse dalam RIALO, dibaca dari pool AMM di Rialo Testnet
+  const [rialoPriceInEth, setRialoPriceInEth] = useState(0);
 
-  const { data: tokenReserve } = useReadContract({
-    address: SWAP_ADDRESS,
-    abi: SWAP_ABI,
-    functionName: "getTokenReserve",
-  });
-
-  const rialoPriceInEth =
-    ethReserve && tokenReserve && tokenReserve > 0n
-      ? Number(formatEther(ethReserve)) /
-        Number(formatUnits(tokenReserve, 18))
-      : 0;
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const cdk = await import("@rialo/ts-cdk");
+        const client = cdk.createRialoClient(cdk.getDefaultRialoClientConfig("testnet"));
+        const P = (x) => cdk.PublicKey.fromString(x);
+        const rialo = Number(BigInt(await client.getBalance(P(POOL_PDA)))) / 1e9;
+        const token = parseFloat((await client.getTokenAccountBalance(P(VAULT_TOKEN))).uiAmountString);
+        if (!cancelled && token > 0) setRialoPriceInEth(rialo / token);
+      } catch {}
+    };
+    load();
+    const id = setInterval(load, 20000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   useEffect(() => {
     const elements = document.querySelectorAll(".rv-reveal");
@@ -737,12 +722,12 @@ export default function Home() {
               ? rialoPriceInEth.toFixed(8)
               : "—"}
           </strong>
-          <small>RIALO / ETH</small>
+          <small>RVERSE / RIALO</small>
         </div>
 
         <div>
           <span>NETWORK</span>
-          <strong>SEPOLIA</strong>
+          <strong>RIALO TESTNET</strong>
           <small>TESTNET</small>
         </div>
 
