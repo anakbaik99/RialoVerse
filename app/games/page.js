@@ -6,7 +6,7 @@ import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 const BUILDINGS = [
-  { name: "Rialo Wheel", color: "#d7ff1f", position: [-9, 0, -7] },
+  { name: "Rialo Wheel", color: "#d7ff1f", position: [-9, 0, -7], href: "/games/wheel" },
   { name: "Cube Runner", color: "#5fd0ff", position: [9, 0, -7] },
   { name: "Battle Arena", color: "#ff5f7a", position: [-9, 0, 9] },
   { name: "Token Match", color: "#ffb85f", position: [9, 0, 9] },
@@ -445,6 +445,7 @@ export default function GamesWorldPage() {
 
   const handleEnter = () => {
     if (!near) return;
+    if (near.href) { window.location.href = near.href; return; }
     setToast(`${near.name} — Coming soon!`);
     setTimeout(() => setToast(""), 2000);
   };
