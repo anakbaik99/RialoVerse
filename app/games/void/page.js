@@ -249,7 +249,7 @@ export default function VoidRunPage() {
     : ended ? (ended.type === "win" ? ended.row + 1 : ended.type === "cash" ? ended.step : ended.row) : 0;
   const boardSeed = run.active || ended ? seed : null;
   const focusRow = run.active ? run.step : cleared;
-  const rowsShown = Math.max(6, focusRow + 4);
+  const rowsShown = boardSeed != null ? 200 : 6;
   const rowsData = buildRows(boardSeed, rowsShown);
   const cashValue = run.active && run.step > 0 ? run.bet * run.mult : 0;
 
