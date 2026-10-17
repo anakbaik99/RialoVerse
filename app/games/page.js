@@ -431,6 +431,23 @@ export default function GamesWorldPage() {
   const [near, setNear] = useState(null);
   const [toast, setToast] = useState("");
 
+  // kembali dari sebuah game: robot muncul di depan gerbang game itu
+  useEffect(() => {
+    try {
+      const name = sessionStorage.getItem("rv-games-return");
+      if (!name) return;
+      sessionStorage.removeItem("rv-games-return");
+      const b = BUILDINGS.find((x) => x.name === name);
+      if (!b) return;
+      const len = Math.hypot(b.position[0], b.position[2]) || 1;
+      const dx = -b.position[0] / len;
+      const dz = -b.position[2] / len;
+      posRef.current.x = b.position[0] + dx * 3.0;
+      posRef.current.z = b.position[2] + dz * 3.0;
+      facingRef.current = Math.atan2(dx, dz);
+    } catch {}
+  }, []);
+
   const dragHandlers = useDragMove(moveRef);
   useKeyboardMove(moveRef, dragActiveRef);
 
@@ -445,7 +462,7 @@ export default function GamesWorldPage() {
 
   const handleEnter = () => {
     if (!near) return;
-    if (near.href) { window.location.href = near.href; return; }
+    if (near.href) { try { sessionStorage.setItem("rv-games-return", near.name); } catch {} window.location.href = near.href; return; }
     setToast(`${near.name} — Coming soon!`);
     setTimeout(() => setToast(""), 2000);
   };
