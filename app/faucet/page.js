@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRialoWallet } from "../providers";
+import WalletMenu from "../WalletMenu";
 
 const KELVIN_PER_RLO = 1000000000n; // 1 RIALO = 1e9 kelvin
 const EXPLORER_TX = "https://rialo-explorer-testnet-direct.vercel.app/txs/";
@@ -96,9 +97,7 @@ export default function FaucetPage() {
 
         {isConnected && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-            <button onClick={disconnect} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}>
-              {address.slice(0, 6)}...{address.slice(-4)}
-            </button>
+            <WalletMenu />
           </div>
         )}
 

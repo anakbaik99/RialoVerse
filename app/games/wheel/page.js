@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRialoWallet } from "../../providers";
+import WalletMenu from "../../WalletMenu";
 
 // ====== Rialo Testnet ======
 const WHEEL_PROGRAM = "Hmd2pSRZM7q1j873kQQUfzBVLnDrV4sfhSK45FRMF5wZ";
@@ -216,9 +217,7 @@ export default function RialoWheelPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <span style={{ fontSize: 11, letterSpacing: 1, ...muted }}>RIALO TESTNET</span>
           {isConnected && (
-            <span style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600 }}>
-              {address.slice(0, 6)}...{address.slice(-4)}
-            </span>
+            <WalletMenu />
           )}
         </div>
 

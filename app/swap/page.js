@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRialoWallet } from "../providers";
+import WalletMenu from "../WalletMenu";
 
 // ====== Konfigurasi Rialo Testnet (pool RIALO <-> RVerse) ======
 const AMM_PROGRAM = "D6py9TbbsCTPABZfgpexc8fHXTsDG2x9eJivfzyR7pDi";
@@ -230,9 +231,7 @@ export default function SwapPage() {
 
         {isConnected && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-            <button onClick={disconnect} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 999, border: "2px solid #d7ff1f", background: "#0a0a0a", color: "#d7ff1f", fontWeight: 600, cursor: "pointer" }}>
-              {address.slice(0, 6)}...{address.slice(-4)}
-            </button>
+            <WalletMenu />
           </div>
         )}
 
