@@ -212,7 +212,13 @@ export default function TokenMatchPage() {
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 16, background: "radial-gradient(circle at 50% 0%, #2a1a05 0%, #0a0a0a 55%)", color: "#fff", boxSizing: "border-box", gap: 16 }}>
       <div style={{ width: "100%", maxWidth: 420, display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
         <a href="/games" style={{ textDecoration: "none", fontWeight: 700 }}><span style={{ color: "#fff" }}>← Rialo</span><span style={{ color: "#d7ff1f" }}>Verse</span></a>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Token Match</h2>
+        <h2 style={{
+  margin: 0,
+  fontFamily: "var(--font-orbitron), sans-serif",
+  fontWeight: 800,
+  letterSpacing: "0.04em",
+  textShadow: "0 0 12px #d7ff1f44"
+}}>Token Match</h2>
       </div>
 
       {/* REELS */}

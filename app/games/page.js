@@ -157,6 +157,7 @@ function Building({ data }) {
         <div
           style={{
             color: "#fff",
+            fontFamily: "var(--font-orbitron), sans-serif",
             fontSize: 12,
             fontWeight: 700,
             whiteSpace: "nowrap",
