@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRialoWallet } from "../../providers";
 import WalletMenu from "../../WalletMenu";
 
@@ -127,6 +127,42 @@ export default function VoidRunPage() {
   }, [address]);
 
   useEffect(() => { loadState(); }, [loadState]);
+
+  const [history, setHistory] = useState([]);
+  const histCache = useRef(new Map());
+
+  // History dibaca dari transaksi on-chain di akun run pemain
+  const loadHistory = useCallback(async () => {
+    if (!address) { setHistory([]); return; }
+    try {
+      const { cdk, client } = await loadCdk();
+      const P = (s) => cdk.PublicKey.fromString(s);
+      const owner = P(address);
+      const [runPda] = cdk.PublicKey.findProgramAddress([new TextEncoder().encode("run"), owner.toBytes()], P(VOID_PROGRAM));
+      const sigs = await client.getSignaturesForAddress(runPda, { limit: 40 });
+      const infos = await Promise.all(sigs.map(async (s) => {
+        const k = sigKey(s);
+        if (histCache.current.has(k)) return histCache.current.get(k);
+        const info = await readVoid(client, s);
+        if (info) histCache.current.set(k, info);
+        return info;
+      }));
+      const list = infos.filter((i) => i && !i.failed).reverse();
+      const runs = [];
+      let cur = null;
+      for (const i of list) {
+        if (i.kind === "start") cur = { bet: i.bet };
+        else if (i.kind === "hit") { runs.push({ win: false, bet: i.bet, payout: 0, rows: i.row + 1 }); cur = null; }
+        else if (i.kind === "cashout") { runs.push({ win: true, bet: cur ? cur.bet : null, payout: i.payout, rows: i.step }); cur = null; }
+        else if (i.kind === "win") { runs.push({ win: true, bet: cur ? cur.bet : null, payout: i.payout, rows: i.row + 1 }); cur = null; }
+      }
+      setHistory(runs.reverse().slice(0, 10));
+    } catch {}
+  }, [address]);
+
+  // muat ulang history tiap aksi selesai
+  useEffect(() => { if (phase === "idle") loadHistory(); }, [phase, loadHistory]);
+
 
   // Kirim satu aksi ke program, lalu baca hasilnya dari log
   async function doAction(data) {
@@ -342,6 +378,21 @@ export default function VoidRunPage() {
 
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13, wordBreak: "break-word" }}>{errorMsg}</p>}
       </div>
+
+      {isConnected && history.length > 0 && (
+        <div style={{ ...panel, border: "2px solid #2a2b3a" }}>
+          <div style={{ fontSize: 11, letterSpacing: 1, marginBottom: 10, ...muted }}>HISTORY</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {history.map((h, idx) => (
+              <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 10px", background: "#15161f", border: `2px solid ${h.win ? "#2f3a12" : "#3a1218"}`, fontSize: 13 }}>
+                <span style={{ width: 48, fontWeight: 700, color: h.win ? "#d7ff1f" : "#ff4d4d" }}>{h.win ? "WIN" : "LOSE"}</span>
+                <span style={{ flex: 1, ...muted }}>{h.bet != null ? `${fmt(h.bet, 2)} bet • ` : ""}{h.win ? `${h.rows} rows` : `row ${h.rows}`}</span>
+                <b style={{ color: h.win ? "#d7ff1f" : "#ff4d4d" }}>{h.win ? (h.bet != null ? `+${fmt(h.payout - h.bet, 4)}` : fmt(h.payout, 4)) : `-${fmt(h.bet, 2)}`}</b>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ width: "100%", maxWidth: 420, fontSize: 12, textAlign: "center", marginBottom: 24, ...muted }}>
         Endless board: each row hides one void, and more tiles means a bigger multiplier. Climb as high as you dare and cash out any time. A run pays at most {fmt(MAX_PAYOUT, 0)} RIALO. Every pick is one transaction on Rialo Testnet.
