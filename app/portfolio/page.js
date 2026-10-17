@@ -96,7 +96,9 @@ function DonutChart({ holdings }) {
 
 function timeAgo(unixSeconds) {
   if (!unixSeconds) return "";
-  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - Number(unixSeconds)));
+  let t = Number(unixSeconds);
+  if (t > 1e17) t = t / 1e9; else if (t > 1e14) t = t / 1e6; else if (t > 1e11) t = t / 1e3;
+  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - t));
   if (seconds < 60) return `${seconds}s ago`;
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -154,16 +156,28 @@ export default function PortfolioPage() {
         const out = [];
         for (const s of sigs) {
           const sigStr = typeof s.signature === "string" ? s.signature : toBase58(Uint8Array.from(s.signature));
-          let kind = "Other", ok = !s.err;
+          let kind = "Other", ok = !s.err, delta = null;
           try {
             const tx = await client.queryClient.call("getTransaction", [{ signature: s.signature }]);
             const logs = tx?.meta?.logMessages || [];
             ok = !tx?.meta?.err;
-            if (logs.some((l) => l.includes(AMM_PROGRAM))) kind = "Swap";
+            const vl = logs.find((l) => l.includes("void:"));
+            if (vl) {
+              const vt = vl.slice(vl.indexOf("void:"));
+              const vk = vt.split(" ")[0].slice(5);
+              const vn = (k) => { const m = vt.match(new RegExp("\\b" + k + "=(\\d+)")); return m ? Number(m[1]) / 1e9 : null; };
+              if (vk === "start") { kind = "Void Run · Bet"; delta = -(vn("bet") || 0); }
+              else if (vk === "safe") kind = "Void Run · Safe pick";
+              else if (vk === "hit") kind = "Void Run · Hit the void";
+              else if (vk === "cashout") { kind = "Void Run · Cash out"; delta = vn("payout"); }
+              else if (vk === "win") { kind = "Void Run · Max win"; delta = vn("payout"); }
+              else kind = "Void Run";
+            }
+            if (vl) { /* Void Run sudah ditangani */ } else if (logs.some((l) => l.includes(AMM_PROGRAM))) kind = "Swap";
             else if (logs.some((l) => l.includes("TransferChecked"))) kind = "Transfer RVerse";
             else if (logs.length) kind = "Transfer RIALO";
           } catch {}
-          out.push({ sig: sigStr, ok, kind, blockTime: s.blockTime ? Number(s.blockTime) : null });
+          out.push({ sig: sigStr, ok, kind, delta, blockTime: s.blockTime ? Number(s.blockTime) : null });
         }
         if (!cancelled) setTxs(out);
       } catch {
@@ -246,6 +260,7 @@ export default function PortfolioPage() {
                         <div style={{ fontSize: 11, color: "#8a8b9c", marginTop: 2 }}>{tx.sig.slice(0, 8)}...{tx.sig.slice(-6)}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
+                        {tx.delta != null && tx.delta !== 0 && (<div style={{ fontSize: 13, fontWeight: 700, color: tx.delta > 0 ? "#d7ff1f" : "#ff4d4d" }}>{tx.delta > 0 ? "+" : ""}{Number(tx.delta.toFixed(4))} RIALO</div>)}
                         <div style={{ fontSize: 13, fontWeight: 600, color: tx.ok ? "#8affa0" : "#ff8a8a" }}>{tx.ok ? "Success" : "Failed"}</div>
                         <div style={{ fontSize: 11, color: "#8a8b9c", marginTop: 2 }}>{timeAgo(tx.blockTime)}</div>
                       </div>
