@@ -16,6 +16,27 @@ function parseAction(text) {
   return { cleanText, action: { type, params } };
 }
 
+function resolveOpenCommand(text) {
+  const q = text.toLowerCase().trim().replace(/[.!?]+$/, "");
+  const intent = /^(open|go to|take me to|launch|navigate to|show me|play|start)\\b/.test(q);
+  if (!intent) return null;
+
+  const routes = [
+    [/token\\s*match|match game/, "/games/match", "Token Match"],
+    [/rialo\\s*flip|\\bflip\\b|coin flip/, "/games/flip", "Rialo Flip"],
+    [/rialo\\s*wheel|\\bwheel\\b/, "/games/wheel", "Rialo Wheel"],
+    [/void\\s*run/, "/games/void", "Rialo Void Run"],
+    [/\\bgames?\\b/, "/games", "Games"],
+    [/\\bswap\\b/, "/swap", "Swap"],
+    [/\\bfaucet\\b/, "/faucet", "Faucet"],
+    [/\\bportfolio\\b/, "/portfolio", "Portfolio"],
+    [/\\bcomi\\b/, "/comi", "COMI"],
+  ];
+
+  const found = routes.find(([pattern]) => pattern.test(q));
+  return found ? { path: found[1], label: found[2] } : null;
+}
+
 export default function ComiPage() {
   const router = useRouter();
   const [messages, setMessages] = useState([
@@ -31,10 +52,22 @@ export default function ComiPage() {
 
   async function sendMessage() {
     if (!input.trim() || loading) return;
-    const userMsg = { role: "user", content: input.trim() };
+    const typed = input.trim();
+    const directTarget = resolveOpenCommand(typed);
+    const userMsg = { role: "user", content: typed };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
+
+    if (directTarget) {
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: "Opening " + directTarget.label + "..." },
+      ]);
+      router.push(directTarget.path);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -66,6 +99,15 @@ export default function ComiPage() {
       router.push(`/swap?from=${from}&to=${to}&amount=${amount}`);
     } else if (action.type === "CLAIM") {
       router.push("/faucet");
+    } else if (action.type === "OPEN") {
+      const allowed = [
+        "/games", "/games/flip", "/games/match",
+        "/games/wheel", "/games/void",
+        "/swap", "/faucet", "/portfolio", "/comi",
+      ];
+      if (allowed.includes(action.params?.path)) {
+        router.push(action.params.path);
+      }
     }
   }
 
@@ -92,7 +134,7 @@ export default function ComiPage() {
                   onClick={() => handleActionClick(m.action)}
                   style={{ display: "block", marginTop: 8, padding: "8px 14px", borderRadius: 10, border: "none", background: "#f59e0b", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer" }}
                 >
-                  {m.action.type === "SWAP" ? "Open in Swap →" : "Open Faucet →"}
+                  {m.action.type === "SWAP" ? "Open in Swap →" : m.action.type === "CLAIM" ? "Open Faucet →" : "Open page →"}
                 </button>
               )}
             </div>
