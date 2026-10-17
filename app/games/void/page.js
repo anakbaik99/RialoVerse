@@ -9,16 +9,32 @@ const VAULT = "HemDytSMRoZsNndJ3QdEEKmaFLGUgtCH6yUap7j2YXLx";
 const MIN_BET = 1;
 const MAX_BET = 100;
 const FEE_BUFFER = 0.02;
+const MAX_PAYOUT = 1000;
 
-// Layout (petak per baris, 3-7) diacak program tiap run dan disimpan di akun run.
-// Pengali kumulatif = 0.95 * prod(n / (n - 1)), dibulatkan ke bawah 2 desimal (sama dengan program).
-const ROWS = 6;
-const DEFAULT_LAYOUT = [3, 3, 3, 3, 3, 3];
-function multAt(layout, rows) {
-  let n = 1, d = 1;
-  for (let i = 0; i < rows; i++) { n *= layout[i]; d *= layout[i] - 1; }
-  return Math.floor(Math.floor((9500 * n) / d) / 100) / 100;
+// Papan tanpa batas. Petak baris r = 3 + mix(seed + r) % 5, seed diacak program saat start.
+// Pengali kumulatif = 0.95 * prod(n / (n - 1)) (sama dengan program).
+const M64 = (1n << 64n) - 1n;
+function mixBig(z) {
+  z = (z + 0x9E3779B97F4A7C15n) & M64;
+  z = ((z ^ (z >> 30n)) * 0xBF58476D1CE4E5B9n) & M64;
+  z = ((z ^ (z >> 27n)) * 0x94D049BB133111EBn) & M64;
+  return z ^ (z >> 31n);
 }
+function tilesFor(seed, row) {
+  if (seed == null) return 3;
+  return Number(3n + (mixBig((seed + BigInt(row)) & M64) % 5n));
+}
+function buildRows(seed, count) {
+  let m = 950000n;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const n = tilesFor(seed, i);
+    m = (m * BigInt(n)) / BigInt(n - 1);
+    out.push({ n, mult: Number(m) / 1e6 });
+  }
+  return out;
+}
+const fmtMult = (x) => (Math.floor(x * 100 + 1e-9) / 100).toFixed(2);
 
 let cdkPromise;
 function loadCdk() {
@@ -77,8 +93,8 @@ export default function VoidRunPage() {
   const [bet, setBet] = useState("");
   const [balance, setBalance] = useState(0);
   const [pool, setPool] = useState(0);
-  const [run, setRun] = useState({ active: 0, step: 0, bet: 0 });
-  const [layout, setLayout] = useState(DEFAULT_LAYOUT);
+  const [run, setRun] = useState({ active: 0, step: 0, bet: 0, mult: 0 });
+  const [seed, setSeed] = useState(null);
   const [trail, setTrail] = useState({});     // row -> { picked, voidIdx }
   const [ended, setEnded] = useState(null);   // { type: hit|win|cash, ... }
   const [phase, setPhase] = useState("idle"); // idle | signing | waiting
@@ -89,18 +105,21 @@ export default function VoidRunPage() {
       const { cdk, client } = await loadCdk();
       const P = (s) => cdk.PublicKey.fromString(s);
       try { setPool(Number(BigInt(await client.getBalance(P(VAULT)))) / 1e9); } catch {}
-      if (!address) { setBalance(0); setRun({ active: 0, step: 0, bet: 0 }); return; }
+      if (!address) { setBalance(0); setRun({ active: 0, step: 0, bet: 0, mult: 0 }); return; }
       const owner = P(address);
       try { setBalance(Number(BigInt(await client.getBalance(owner))) / 1e9); } catch {}
       const [runPda] = cdk.PublicKey.findProgramAddress([new TextEncoder().encode("run"), owner.toBytes()], P(VOID_PROGRAM));
-      let st = { active: 0, step: 0, bet: 0 };
+      let st = { active: 0, step: 0, bet: 0, mult: 0 };
       try {
         const a = await client.getAccountInfo(runPda);
         if (a) {
           const d = Uint8Array.from(atob(a.data[0]), (c) => c.charCodeAt(0));
-          st = { active: d[0], step: d[1], bet: Number(new DataView(d.buffer).getBigUint64(8, true)) / 1e9 };
-          const l = Array.from(d.slice(2, 2 + ROWS));
-          if (l.length === ROWS && l.every((n) => n >= 2 && n <= 7)) setLayout(l);
+          const dv = new DataView(d.buffer);
+          st = { active: d[0], step: d[1], bet: Number(dv.getBigUint64(8, true)) / 1e9, mult: 0 };
+          if (d.length >= 32) {
+            setSeed(dv.getBigUint64(16, true));
+            st.mult = Number(dv.getBigUint64(24, true)) / 1e6;
+          }
         }
       } catch {}
       setRun(st);
@@ -148,7 +167,6 @@ export default function VoidRunPage() {
 
   const busy = phase !== "idle";
   const betNum = parseFloat(bet) || 0;
-  const MULT = layout.map((_, i) => multAt(layout, i + 1));
 
   async function guard(fn) {
     setErrorMsg("");
@@ -179,7 +197,7 @@ export default function VoidRunPage() {
       setEnded({ type: "hit", row: res.row, tile: res.tile });
     } else if (res.kind === "win") {
       setTrail((t) => ({ ...t, [res.row]: { picked: res.tile, voidIdx: res.voidIdx } }));
-      setEnded({ type: "win", payout: res.payout });
+      setEnded({ type: "win", payout: res.payout, row: res.row });
     }
   });
 
@@ -192,8 +210,18 @@ export default function VoidRunPage() {
 
   // baris yang sudah dilewati
   const cleared = run.active ? run.step
-    : ended ? (ended.type === "win" ? ROWS : ended.type === "cash" ? ended.step : ended.row) : 0;
-  const cashValue = run.active && run.step > 0 ? run.bet * MULT[run.step - 1] : 0;
+    : ended ? (ended.type === "win" ? ended.row + 1 : ended.type === "cash" ? ended.step : ended.row) : 0;
+  const boardSeed = run.active || ended ? seed : null;
+  const focusRow = run.active ? run.step : cleared;
+  const rowsShown = Math.max(6, focusRow + 4);
+  const rowsData = buildRows(boardSeed, rowsShown);
+  const cashValue = run.active && run.step > 0 ? run.bet * run.mult : 0;
+
+  // ikuti baris aktif saat papan memanjang
+  useEffect(() => {
+    const el = document.getElementById(`vr-row-${focusRow}`);
+    if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focusRow, run.active, ended]);
 
   const panel = { width: "100%", maxWidth: 420, background: "#111218", border: "2px solid #d7ff1f", padding: 20, boxSizing: "border-box" };
   const muted = { color: "#8a8b9c" };
@@ -240,18 +268,18 @@ export default function VoidRunPage() {
         </div>
       </div>
 
-      {/* BOARD */}
+      {/* BOARD: baris terbawah = baris 1, papan memanjang ke atas dan bisa di-scroll */}
       <div style={panel}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {[...Array(ROWS).keys()].reverse().map((i) => {
+        <div style={{ display: "flex", flexDirection: "column-reverse", gap: 8, maxHeight: "58vh", overflowY: "auto" }}>
+          {rowsData.map((r, i) => {
             const status = ended?.type === "hit" && i === ended.row ? "hit"
               : i < cleared ? "cleared"
               : run.active && i === run.step ? "current" : "locked";
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px", background: status === "hit" ? "#1d0f13" : "#15161f", border: `2px solid ${status === "current" ? "#d7ff1f" : status === "hit" ? "#ff4d4d" : "#2a2b3a"}` }}>
-                <span style={{ width: 50, flexShrink: 0, fontSize: 13, fontWeight: 700, color: status === "current" ? "#d7ff1f" : status === "hit" ? "#ff4d4d" : "#8a8b9c" }}>{MULT[i].toFixed(2)}x</span>
+              <div key={i} id={`vr-row-${i}`} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px", flexShrink: 0, background: status === "hit" ? "#1d0f13" : "#15161f", border: `2px solid ${status === "current" ? "#d7ff1f" : status === "hit" ? "#ff4d4d" : "#2a2b3a"}` }}>
+                <span style={{ width: 54, flexShrink: 0, fontSize: 13, fontWeight: 700, color: status === "current" ? "#d7ff1f" : status === "hit" ? "#ff4d4d" : "#8a8b9c" }}>{fmtMult(r.mult)}x</span>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center", gap: 6 }}>
-                  {[...Array(layout[i]).keys()].map((t) => tileView(i, t, status))}
+                  {[...Array(r.n).keys()].map((t) => tileView(i, t, status))}
                 </div>
               </div>
             );
@@ -265,7 +293,7 @@ export default function VoidRunPage() {
           <>
             <p style={{ margin: "0 0 12px", textAlign: "center", fontWeight: 700, fontSize: 15, color: ended.type === "hit" ? "#ff4d4d" : "#d7ff1f" }}>
               {ended.type === "hit" ? `☠ Eliminated — you hit the void at row ${ended.row + 1}.`
-                : ended.type === "win" ? `Top of the board! You won ${fmt(ended.payout, 4)} RIALO!`
+                : ended.type === "win" ? `Max payout reached! You won ${fmt(ended.payout, 4)} RIALO!`
                 : `Cashed out ${fmt(ended.payout, 4)} RIALO`}
             </p>
             <button onClick={newRun} style={bigBtn(false)}>NEW VOID RUN</button>
@@ -304,7 +332,7 @@ export default function VoidRunPage() {
           <>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 12, ...muted }}>
               <span>Bet: <b style={{ color: "#fff" }}>{fmt(run.bet, 2)} RIALO</b></span>
-              <span>Next: <b style={{ color: "#d7ff1f" }}>{MULT[run.step].toFixed(2)}x</b></span>
+              <span>Row {run.step + 1} • Next: <b style={{ color: "#d7ff1f" }}>{fmtMult(rowsData[run.step]?.mult || 0)}x</b></span>
             </div>
             <button onClick={handleCashout} disabled={busy || run.step === 0} className={busy ? "rialo-pulsing" : ""} style={bigBtn(busy || run.step === 0)}>
               {busy ? phaseText : run.step === 0 ? "Pick a tile to start climbing" : `CASH OUT ${fmt(cashValue, 4)} RIALO`}
@@ -316,7 +344,7 @@ export default function VoidRunPage() {
       </div>
 
       <div style={{ width: "100%", maxWidth: 420, fontSize: 12, textAlign: "center", marginBottom: 24, ...muted }}>
-        Each row hides one void. The board is shuffled every run: more tiles on a row means a bigger multiplier. Pick a safe tile to climb, cash out any time. Every pick is one transaction on Rialo Testnet.
+        Endless board: each row hides one void, and more tiles means a bigger multiplier. Climb as high as you dare and cash out any time. A run pays at most {fmt(MAX_PAYOUT, 0)} RIALO. Every pick is one transaction on Rialo Testnet.
       </div>
 
       <style>{`
