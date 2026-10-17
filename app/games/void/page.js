@@ -10,6 +10,7 @@ const MIN_BET = 1;
 const MAX_BET = 100;
 const FEE_BUFFER = 0.02;
 const MAX_PAYOUT = 1000;
+const EXPLORER_TX = "https://rialo-explorer-testnet-direct.vercel.app/txs/";
 
 // Papan tanpa batas. Petak baris r = 3 + mix(seed + r) % 5, seed diacak program saat start.
 // Pengali kumulatif = 0.95 * prod(n / (n - 1)) (sama dengan program).
@@ -143,7 +144,8 @@ export default function VoidRunPage() {
       const infos = await Promise.all(sigs.map(async (s) => {
         const k = sigKey(s);
         if (histCache.current.has(k)) return histCache.current.get(k);
-        const info = await readVoid(client, s);
+        const raw = await readVoid(client, s);
+        const info = raw ? { ...raw, sig: k } : raw;
         if (info) histCache.current.set(k, info);
         return info;
       }));
@@ -152,9 +154,9 @@ export default function VoidRunPage() {
       let cur = null;
       for (const i of list) {
         if (i.kind === "start") cur = { bet: i.bet };
-        else if (i.kind === "hit") { runs.push({ win: false, bet: i.bet, payout: 0, rows: i.row + 1 }); cur = null; }
-        else if (i.kind === "cashout") { runs.push({ win: true, bet: cur ? cur.bet : null, payout: i.payout, rows: i.step }); cur = null; }
-        else if (i.kind === "win") { runs.push({ win: true, bet: cur ? cur.bet : null, payout: i.payout, rows: i.row + 1 }); cur = null; }
+        else if (i.kind === "hit") { runs.push({ sig: i.sig, win: false, bet: i.bet, payout: 0, rows: i.row + 1 }); cur = null; }
+        else if (i.kind === "cashout") { runs.push({ sig: i.sig, win: true, bet: cur ? cur.bet : null, payout: i.payout, rows: i.step }); cur = null; }
+        else if (i.kind === "win") { runs.push({ sig: i.sig, win: true, bet: cur ? cur.bet : null, payout: i.payout, rows: i.row + 1 }); cur = null; }
       }
       setHistory(runs.reverse().slice(0, 10));
     } catch {}
@@ -384,7 +386,7 @@ export default function VoidRunPage() {
           <div style={{ fontSize: 11, letterSpacing: 1, marginBottom: 10, ...muted }}>HISTORY</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {history.map((h, idx) => (
-              <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 10px", background: "#15161f", border: `2px solid ${h.win ? "#2f3a12" : "#3a1218"}`, fontSize: 13 }}>
+              <div key={idx} onClick={() => h.sig && window.open(EXPLORER_TX + h.sig, "_blank", "noopener")} style={{ cursor: h.sig ? "pointer" : "default", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 10px", background: "#15161f", border: `2px solid ${h.win ? "#2f3a12" : "#3a1218"}`, fontSize: 13 }}>
                 <span style={{ width: 48, fontWeight: 700, color: h.win ? "#d7ff1f" : "#ff4d4d" }}>{h.win ? "WIN" : "LOSE"}</span>
                 <span style={{ flex: 1, ...muted }}>{h.bet != null ? `${fmt(h.bet, 2)} bet • ` : ""}{h.win ? `${h.rows} rows` : `row ${h.rows}`}</span>
                 <b style={{ color: h.win ? "#d7ff1f" : "#ff4d4d" }}>{h.win ? (h.bet != null ? `+${fmt(h.payout - h.bet, 4)}` : fmt(h.payout, 4)) : `-${fmt(h.bet, 2)}`}</b>
