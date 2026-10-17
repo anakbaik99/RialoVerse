@@ -182,7 +182,7 @@ export default function PortfolioPage() {
             tm = true;
             const tbet = Number(mm[4]), tpay = Number(mm[5]);
             const sy = ["R", "V", "◆", "★"];
-            kind = "Token Match · " + sy[mm[1]] + sy[mm[2]] + sy[mm[3]] + (tpay > 0 ? " · Win" : " · Lose");
+            kind = "Token Match · " + sy[mm[1]] + sy[mm[2]] + sy[mm[3]] + (tpay > tbet ? " · Win" : tpay > 0 ? " · Pair" : " · Lose");
             delta = (tpay - tbet) / 1e9;
           }
         }

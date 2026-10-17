@@ -251,7 +251,7 @@ export default function TokenMatchPage() {
         </button>
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13, wordBreak: "break-word" }}>{errorMsg}</p>}
         {result && (
-          <p style={{ marginTop: 12, fontSize: 15, fontWeight: 800, textAlign: "center", color: result.payout > 0 ? "#d7ff1f" : "#ff7a8a" }}>
+          <p style={{ marginTop: 12, fontSize: 15, fontWeight: 800, textAlign: "center", color: result.payout > result.bet ? "#d7ff1f" : pair ? "#ffb85f" : "#ff7a8a" }}>
             {trip ? `${sym(result.r[0]).ch}${sym(result.r[1]).ch}${sym(result.r[2]).ch} MATCH — you won ${fmt(result.payout, 4)} RIALO!`
               : pair ? `Pair — ${fmt(result.payout, 4)} RIALO back`
               : "No match — better luck next time"}
@@ -288,8 +288,8 @@ export default function TokenMatchPage() {
               ))}
             </span>
             <span style={{ textAlign: "right", fontSize: 12 }}>
-              <div style={{ color: h.payout > 0 ? "#d7ff1f" : "#8a8b9c", fontWeight: 700, fontSize: 13 }}>
-                {h.payout > 0 ? `+${fmt(h.payout - h.bet, 4)}` : `-${fmt(h.bet, 4)}`} RIALO
+              <div style={{ color: h.payout > h.bet ? "#d7ff1f" : "#ff7a8a", fontWeight: 700, fontSize: 13 }}>
+                {h.payout - h.bet > 0 ? "+" : "-"}{fmt(Math.abs(h.payout - h.bet), 4)} RIALO
               </div>
               <div style={muted}>bet {fmt(h.bet, 2)} • {timeAgo(h.blockTime)}</div>
             </span>
