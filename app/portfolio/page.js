@@ -174,6 +174,37 @@ export default function PortfolioPage() {
               else kind = "Void Run";
             }
             if (vl) { /* Void Run sudah ditangani */ } else if (logs.some((l) => l.includes(AMM_PROGRAM))) kind = "Swap";
+        const wl = logs.find((l) => l.includes("wheel segment="));
+        if (wl) {
+          const wn = (k) => { const m = wl.match(new RegExp("\\b" + k + "=(\\d+)")); return m ? Number(m[1]) : 0; };
+          const wbet = wn("bet"), wpay = wn("payout");
+          kind = wpay > 0 ? "Wheel · Win x" + Number((wpay / (wbet || 1)).toFixed(2)) : "Wheel · No win";
+          delta = (wpay - wbet) / 1e9;
+        }
+        if (!vl && !wl && logs.some((l) => l.includes("swap ok"))) {
+          const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+          const b58 = (str) => { let n = 0n; for (const c of str) n = n * 58n + BigInt(B58.indexOf(c)); const bytes = []; while (n > 0n) { bytes.unshift(Number(n & 255n)); n >>= 8n; } for (const c of str) { if (c === "1") bytes.unshift(0); else break; } return bytes; };
+          const le = (arr, a, b) => { let v = 0n; for (let i = b; i >= a; i--) v = v * 256n + BigInt(arr[i]); return v; };
+          const keys = tx?.transaction?.message?.accountKeys || [];
+          const me = keys[0];
+          const SYS = "11111111111111111111111111111111";
+          const inner = (tx?.meta?.innerInstructions || []).flatMap((x) => (x.instruction ? [x.instruction] : (x.instructions || [])));
+          let net = 0n, tok = null;
+          for (const ix of inner) {
+            let d = [];
+            try { d = b58(ix.data); } catch (e) {}
+            if (keys[ix.programIdIndex] === SYS && d[0] === 2 && d.length >= 12) {
+              const amt = le(d, 4, 11);
+              if (keys[ix.accounts[1]] === me) net += amt;
+              if (keys[ix.accounts[0]] === me) net -= amt;
+            } else if (d[0] === 12 && d.length === 10) {
+              tok = Number(le(d, 1, 8)) / Math.pow(10, d[9]);
+            }
+          }
+          const ts = tok != null ? Number(tok.toFixed(2)) + " " : "";
+          delta = Number(net) / 1e9;
+          kind = net > 0n ? "Swap · " + ts + "RVerse → RIALO" : net < 0n ? "Swap · RIALO → " + ts + "RVerse" : "Swap";
+        }
             else if (logs.some((l) => l.includes("TransferChecked"))) kind = "Transfer RVerse";
             else if (logs.length) kind = "Transfer RIALO";
           } catch {}
