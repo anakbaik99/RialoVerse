@@ -8,7 +8,7 @@ import * as THREE from "three";
 const BUILDINGS = [
   { name: "Rialo Wheel", color: "#d7ff1f", position: [-9, 0, -7], href: "/games/wheel" },
   { name: "Rialo Void Run", color: "#5fd0ff", position: [9, 0, -7], href: "/games/void" },
-  { name: "Battle Arena", color: "#ff5f7a", position: [-9, 0, 9] },
+  { name: "Rialo Flip", color: "#ff5f7a", position: [-9, 0, 9], href: "/games/flip" },
   { name: "Token Match", color: "#ffb85f", position: [9, 0, 9] },
 ];
 
