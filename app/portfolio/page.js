@@ -174,6 +174,18 @@ export default function PortfolioPage() {
               else kind = "Void Run";
             }
             const wl = logs.find((l) => l.includes("wheel segment="));
+        const tmv = logs.find((l) => l.includes("match r1="));
+        let tm = false;
+        if (tmv) {
+          const mm = tmv.match(/r1=(\d) r2=(\d) r3=(\d) bet=(\d+) payout=(\d+)/);
+          if (mm) {
+            tm = true;
+            const tbet = Number(mm[4]), tpay = Number(mm[5]);
+            const sy = ["R", "V", "◆", "★"];
+            kind = "Token Match · " + sy[mm[1]] + sy[mm[2]] + sy[mm[3]] + (tpay > 0 ? " · Win" : " · Lose");
+            delta = (tpay - tbet) / 1e9;
+          }
+        }
         const fl = logs.find((l) => l.includes("flip choice="));
         if (fl) {
           const fm = fl.match(/choice=(\d+) result=(\d+) bet=(\d+) payout=(\d+)/);
@@ -189,7 +201,7 @@ export default function PortfolioPage() {
           kind = wpay > 0 ? "Wheel · Win x" + Number((wpay / (wbet || 1)).toFixed(2)) : "Wheel · No win";
           delta = (wpay - wbet) / 1e9;
         }
-        const swapOk = !vl && !wl && !fl && logs.some((l) => l.includes("swap ok"));
+        const swapOk = !tm && !vl && !wl && !fl && logs.some((l) => l.includes("swap ok"));
         if (swapOk) {
           const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
           const b58 = (str) => { let n = 0n; for (const c of str) n = n * 58n + BigInt(B58.indexOf(c)); const bytes = []; while (n > 0n) { bytes.unshift(Number(n & 255n)); n >>= 8n; } for (const c of str) { if (c === "1") bytes.unshift(0); else break; } return bytes; };
@@ -214,7 +226,7 @@ export default function PortfolioPage() {
           delta = Number(net) / 1e9;
           kind = net > 0n ? "Swap · " + ts + "RVerse → RIALO" : net < 0n ? "Swap · RIALO → " + ts + "RVerse" : "Swap";
         }
-        if (vl || wl || fl || swapOk) { /* Void Run sudah ditangani */ } else if (logs.some((l) => l.includes(AMM_PROGRAM))) kind = "Swap";
+        if (vl || wl || tm || fl || swapOk) { /* Void Run sudah ditangani */ } else if (logs.some((l) => l.includes(AMM_PROGRAM))) kind = "Swap";
             else if (logs.some((l) => l.includes("TransferChecked"))) kind = "Transfer RVerse";
             else if (logs.length) kind = "Transfer RIALO";
           } catch {}
