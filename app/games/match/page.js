@@ -14,13 +14,18 @@ const MAX_MULT = 100;
 
 // Urutan sama dengan program: 0 = R, 1 = V, 2 = diamond, 3 = star
 const SYMS = [
-  { ch: "R", color: "#d7ff1f", text: "#0a0a0a", pct: 40 },
-  { ch: "V", color: "#8b5cff", text: "#ffffff", pct: 30 },
-  { ch: "◆", color: "#5fd0ff", text: "#0a0a0a", pct: 20 },
-  { ch: "★", color: "#ffb85f", text: "#0a0a0a", pct: 10 },
+  { ch: "R", name: "Rialo", img: "/spawn-logo.svg", color: "#d7ff1f", text: "#0a0a0a", pct: 40 },
+  { ch: "V", name: "RialoVerse", img: "/logo.png", color: "#8b5cff", text: "#ffffff", pct: 30 },
+  { ch: "◆", name: "Diamond", color: "#5fd0ff", text: "#0a0a0a", pct: 20 },
+  { ch: "★", name: "Star", color: "#ffb85f", text: "#0a0a0a", pct: 10 },
 ];
 const TRIPLE = [5, 10, 25, 100];
 const PAIR = 0.15;
+
+function Sym({ s, size }) {
+  if (s.img) return <img src={s.img} alt={s.name} width={size} height={size} draggable={false} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", display: "block" }} />;
+  return <span style={{ fontSize: size * 0.95, lineHeight: 1 }}>{s.ch}</span>;
+}
 
 let cdkPromise;
 function loadCdk() {
@@ -222,7 +227,7 @@ export default function TokenMatchPage() {
             const on = reels.lock[i];
             return (
               <div key={i} style={{ width: 92, height: 112, borderRadius: 16, background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", border: `3px solid ${on ? s.color : "#2a2b3a"}`, boxShadow: on ? `0 0 26px ${s.color}55, inset 0 0 18px ${s.color}22` : "none", color: s.color, fontSize: 60, fontWeight: 900, textShadow: `0 0 16px ${s.color}`, transition: "border-color .2s, box-shadow .2s", opacity: on ? 1 : 0.8 }}>
-                {s.ch}
+                <Sym s={s} size={64} />
               </div>
             );
           })}
@@ -252,7 +257,7 @@ export default function TokenMatchPage() {
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13, wordBreak: "break-word" }}>{errorMsg}</p>}
         {result && (
           <p style={{ marginTop: 12, fontSize: 15, fontWeight: 800, textAlign: "center", color: result.payout > result.bet ? "#d7ff1f" : pair ? "#ffb85f" : "#ff7a8a" }}>
-            {trip ? `${sym(result.r[0]).ch}${sym(result.r[1]).ch}${sym(result.r[2]).ch} MATCH — you won ${fmt(result.payout, 4)} RIALO!`
+            {trip ? `3x ${sym(result.r[0]).name} MATCH — you won ${fmt(result.payout, 4)} RIALO!`
               : pair ? `Pair — ${fmt(result.payout, 4)} RIALO back`
               : "No match — better luck next time"}
           </p>
@@ -264,7 +269,7 @@ export default function TokenMatchPage() {
         <h3 style={{ fontSize: 13, letterSpacing: 1, margin: "0 0 10px", textTransform: "uppercase", ...muted }}>Payouts</h3>
         {[3, 2, 1, 0].map((i, k) => (
           <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderTop: k ? "1px solid #2a2b3a" : "none", fontSize: 14 }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, color: SYMS[i].color, letterSpacing: 2 }}>{SYMS[i].ch} {SYMS[i].ch} {SYMS[i].ch}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, color: SYMS[i].color, letterSpacing: 2 }}><Sym s={SYMS[i]} size={22} /><Sym s={SYMS[i]} size={22} /><Sym s={SYMS[i]} size={22} /></span>
             <span style={{ fontWeight: 700 }}>{TRIPLE[i]}x</span>
           </div>
         ))}
@@ -284,7 +289,7 @@ export default function TokenMatchPage() {
             style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderTop: i ? "1px solid #2a2b3a" : "none", textDecoration: "none", color: "inherit" }}>
             <span style={{ display: "flex", gap: 6 }}>
               {h.r.map((v, j) => (
-                <i key={j} style={{ width: 24, height: 24, borderRadius: 7, background: SYMS[v].color, color: SYMS[v].text, display: "inline-flex", alignItems: "center", justifyContent: "center", fontStyle: "normal", fontSize: 13, fontWeight: 900 }}>{SYMS[v].ch}</i>
+                <i key={j} style={{ width: 24, height: 24, borderRadius: 7, background: SYMS[v].color, color: SYMS[v].text, display: "inline-flex", alignItems: "center", justifyContent: "center", fontStyle: "normal", fontSize: 13, fontWeight: 900 }}><Sym s={SYMS[v]} size={16} /></i>
               ))}
             </span>
             <span style={{ textAlign: "right", fontSize: 12 }}>

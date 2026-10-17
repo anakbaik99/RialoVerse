@@ -13,9 +13,13 @@ const FEE_BUFFER = 0.01;
 
 // 0 = Heads (R), 1 = Tails (V) - sama dengan program
 const SIDES = [
-  { id: 0, name: "HEADS", letter: "R", color: "#d7ff1f", text: "#0a0a0a" },
-  { id: 1, name: "TAILS", letter: "V", color: "#8b5cff", text: "#ffffff" },
+  { id: 0, name: "HEADS", letter: "R", img: "/spawn-logo.svg", color: "#d7ff1f", text: "#0a0a0a" },
+  { id: 1, name: "TAILS", letter: "V", img: "/logo.png", color: "#8b5cff", text: "#ffffff" },
 ];
+
+function Logo({ s, size }) {
+  return <img src={s.img} alt={s.name} width={size} height={size} draggable={false} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", display: "block" }} />;
+}
 
 let cdkPromise;
 function loadCdk() {
@@ -208,8 +212,8 @@ export default function RialoFlipPage() {
         <div style={{ perspective: 900, display: "flex", justifyContent: "center", margin: "14px 0 18px" }}>
           <div className={phase === "signing" || phase === "waiting" ? "flip-bob" : ""} style={{ width: 170, height: 170 }}>
             <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transform: `rotateY(${rot}deg)`, transition: phase === "flipping" ? "transform 2.3s cubic-bezier(0.2, 0.7, 0.2, 1)" : "none" }}>
-              <div style={face(SIDES[0], false)}>{SIDES[0].letter}</div>
-              <div style={face(SIDES[1], true)}>{SIDES[1].letter}</div>
+              <div style={face(SIDES[0], false)}><Logo s={SIDES[0]} size={128} /></div>
+              <div style={face(SIDES[1], true)}><Logo s={SIDES[1]} size={128} /></div>
             </div>
           </div>
         </div>
@@ -225,7 +229,7 @@ export default function RialoFlipPage() {
             return (
               <button key={s.id} disabled={busy} onClick={() => setSide(s.id)}
                 style={{ flex: 1, padding: "12px 0", borderRadius: 14, cursor: busy ? "not-allowed" : "pointer", border: `2px solid ${on ? s.color : "#2a2b3a"}`, background: on ? `${s.color}22` : "#0a0a0a", color: on ? s.color : "#8a8b9c", fontWeight: 800, fontSize: 14, letterSpacing: 1 }}>
-                <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.1 }}>{s.letter}</div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}><Logo s={s} size={36} /></div>
                 {s.name}
               </button>
             );
@@ -255,7 +259,7 @@ export default function RialoFlipPage() {
         {errorMsg && <p style={{ color: "#ff4d4d", marginTop: 12, textAlign: "center", fontSize: 13, wordBreak: "break-word" }}>{errorMsg}</p>}
         {result && (
           <p style={{ marginTop: 12, fontSize: 15, fontWeight: 800, textAlign: "center", color: won ? "#d7ff1f" : "#ff7a8a" }}>
-            {SIDES[result.result].letter} {SIDES[result.result].name} — {won ? `you won ${fmt(result.payout, 4)} RIALO!` : "not this time"}
+            {SIDES[result.result].name} — {won ? `you won ${fmt(result.payout, 4)} RIALO!` : "not this time"}
           </p>
         )}
       </div>
@@ -269,8 +273,8 @@ export default function RialoFlipPage() {
           <a key={h.sig} href={`https://rialo-explorer-testnet-direct.vercel.app/txs/${h.sig}`} target="_blank" rel="noreferrer"
             style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderTop: i ? "1px solid #2a2b3a" : "none", textDecoration: "none", color: "inherit" }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 14 }}>
-              <i style={{ width: 22, height: 22, borderRadius: "50%", background: SIDES[h.result].color, color: SIDES[h.result].text, display: "inline-flex", alignItems: "center", justifyContent: "center", fontStyle: "normal", fontSize: 12, fontWeight: 900 }}>{SIDES[h.result].letter}</i>
-              picked {SIDES[h.choice].letter}
+              <i style={{ width: 22, height: 22, borderRadius: "50%", background: SIDES[h.result].color, color: SIDES[h.result].text, display: "inline-flex", alignItems: "center", justifyContent: "center", fontStyle: "normal", fontSize: 12, fontWeight: 900 }}><Logo s={SIDES[h.result]} size={16} /></i>
+              picked {SIDES[h.choice].name}
             </span>
             <span style={{ textAlign: "right", fontSize: 12 }}>
               <div style={{ color: h.payout > 0 ? "#d7ff1f" : "#8a8b9c", fontWeight: 700, fontSize: 13 }}>
