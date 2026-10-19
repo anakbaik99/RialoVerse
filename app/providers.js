@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { getWallets } from "@wallet-standard/core";
 import { RIALO_CHAIN } from "./wagmi";
 
@@ -33,17 +33,70 @@ export function Providers({ children }) {
     });
   }, [wallet]);
 
+  // Connect dengan percobaan ulang otomatis: kalau ekstensi masih terkunci, setelah password
+  // dimasukkan permintaan koneksi muncul sendiri tanpa menekan Connect lagi.
+  const connectingRef = useRef(false);
+  const cancelRef = useRef(false);
+
   const connect = useCallback(async () => {
-    setError(null);
     if (!wallet) {
       window.open("https://chromewebstore.google.com/detail/rialo-wallet/dbmgekigjgnahdnfgfpdognodiegpmcg", "_blank");
       return;
     }
+    // menekan Connect saat sedang mencoba = membatalkan
+    if (connectingRef.current) {
+      cancelRef.current = true;
+      return;
+    }
+    connectingRef.current = true;
+    cancelRef.current = false;
+    setError(null);
+
+    let connected = false;
+    let lastError = null;
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const delays = [1500, 2500, 4000, 6000, 8000];
+    const deadline = Date.now() + 75000;
+
     try {
-      const { accounts } = await wallet.features["standard:connect"].connect();
-      setAccount(accounts[0] ?? null);
-    } catch (e) {
-      setError(e?.message || "Gagal connect");
+      for (let i = 0; !connected && !cancelRef.current && Date.now() < deadline; i++) {
+        const attempt = wallet.features["standard:connect"].connect();
+        // kalau permintaan ini baru selesai belakangan (setelah timeout), tetap dipakai
+        attempt.then((res) => {
+          if (!connected && res?.accounts?.length) {
+            connected = true;
+            setAccount(res.accounts[0]);
+          }
+        }).catch(() => {});
+        try {
+          const res = await Promise.race([
+            attempt,
+            new Promise((_, rej) => setTimeout(() => rej(new Error("__timeout")), 10000)),
+          ]);
+          if (res?.accounts?.length) {
+            connected = true;
+            setAccount(res.accounts[0]);
+            break;
+          }
+          lastError = "No account returned";
+          break;
+        } catch (e) {
+          const msg = String(e?.message || e);
+          if (/reject|denied|declin|cancel|refus/i.test(msg)) {
+            lastError = msg;
+            break;
+          }
+          // terkunci atau belum menjawab: coba lagi sebentar lagi
+          await wait(delays[Math.min(i, delays.length - 1)]);
+        }
+      }
+      if (!connected && !cancelRef.current && !lastError) {
+        lastError = "Wallet did not respond. Unlock it, then press Connect again.";
+      }
+      if (!connected && lastError) setError(lastError);
+    } finally {
+      connectingRef.current = false;
+      cancelRef.current = false;
     }
   }, [wallet]);
 
