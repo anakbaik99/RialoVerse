@@ -87,6 +87,14 @@ export default function RialoFlipPage() {
   const [pool, setPool] = useState(0);
   const [history, setHistory] = useState([]);
   const [rot, setRot] = useState(0);
+
+  // koin yang diam menampilkan sisi yang dipilih (0 = heads, 180 = tails)
+  useEffect(() => {
+    setRot((r) => {
+      const target = side * 180;
+      return target + Math.round((r - target) / 360) * 360;
+    });
+  }, [side]);
   const [phase, setPhase] = useState("idle"); // idle | signing | waiting | flipping
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -217,7 +225,7 @@ export default function RialoFlipPage() {
         </div>
         <div style={{ perspective: 900, display: "flex", justifyContent: "center", margin: "14px 0 18px" }}>
           <div className={phase === "signing" || phase === "waiting" ? "flip-bob" : ""} style={{ width: 170, height: 170 }}>
-            <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transform: `rotateY(${rot}deg)`, transition: phase === "flipping" ? "transform 2.3s cubic-bezier(0.2, 0.7, 0.2, 1)" : "none" }}>
+            <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transform: `rotateY(${rot}deg)`, transition: phase === "flipping" ? "transform 2.3s cubic-bezier(0.2, 0.7, 0.2, 1)" : "transform 0.5s ease" }}>
               <div style={face(SIDES[0], false)}><Logo s={SIDES[0]} size={128} /></div>
               <div style={face(SIDES[1], true)}><Logo s={SIDES[1]} size={128} /></div>
             </div>
