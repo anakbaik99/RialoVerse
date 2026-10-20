@@ -4,8 +4,8 @@ import { useRialoWallet } from "../../providers";
 import WalletMenu from "../../WalletMenu";
 
 // ====== Rialo Testnet ======
-const WHEEL_PROGRAM = "Hmd2pSRZM7q1j873kQQUfzBVLnDrV4sfhSK45FRMF5wZ";
-const VAULT = "91F4BqqmGX1BZND25uySyRpLmUG5FMiiaQ9rXk8b5YsA";
+const WHEEL_PROGRAM = "7XTfhgGLzY8uLUYgFxV9L2JN1RUWEV8JrGKRkGehVpDj";
+const VAULT = "CcJUesmZph3MbhQFXZcacwMBytCJXE4xNhei2b3uy2sN";
 const MIN_BET = 1;
 const MAX_BET = 100;
 const FEE_BUFFER = 0.01; // sisakan sedikit RIALO untuk biaya transaksi

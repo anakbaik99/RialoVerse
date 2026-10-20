@@ -4,8 +4,8 @@ import { useRialoWallet } from "../../providers";
 import WalletMenu from "../../WalletMenu";
 
 // ====== Rialo Testnet ======
-const MATCH_PROGRAM = "3oo4MUjgm1gTCuTHwL8by3YZxKkaoSMsgpCrHUd2Rwjy";
-const VAULT = "8M4338AUfz7Rqfs2GzpmZZsx5okAg2djCMeZPzsbqxKk";
+const MATCH_PROGRAM = "hDqz34a16ZNstaQjKY9Gh7XkpAEWX4a8HWahYrZtamY";
+const VAULT = "3Y6jgq8PicFknrzUCZkVYUfroABHzj5gUaizC53PfA1M";
 const MIN_BET = 1;
 const MAX_BET = 5;
 const CHIPS = [1, 2, 3, 5];
