@@ -5,7 +5,7 @@ import WalletMenu from "../../WalletMenu";
 
 // ====== Rialo Testnet ======
 const VOID_PROGRAM = "AQnMVkPkoBQKfvotf8SA5Yg2ad9JaNLA9LQaHAazUpQA";
-const VAULT = "HemDytSMRoZsNndJ3QdEEKmaFLGUgtCH6yUap7j2YXLx";
+const VAULT = "6yRgBhXFmzhBeFKBNFwWD9f71WKDFGzQ2pe5UdAYMFLs";
 const MIN_BET = 1;
 const MAX_BET = 100;
 const FEE_BUFFER = 0.02;

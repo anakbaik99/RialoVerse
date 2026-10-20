@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useAccount, useReadContract } from "./wallet-compat";
 import { useConnectModal, useAccountModal } from "./wallet-compat";
 
-const POOL_PDA = "5DdJ1354CHMdzj533QgW8ytLvV9pQ4JRuCoL9sg9zkSj";
-const VAULT_TOKEN = "ETx31zoDMa9DB247SZ7pQLms7AMRtRdmh38L2vwQFTFA";
+const POOL_PDA = "CRuE5QMrekhsT9QTALcrDHjVTf2s5mfG5fqHYNCQUxYh";
+const VAULT_TOKEN = "2k15jR1GavDcrJ65rqEp26VbGkLxSn64kqLKQtpx2cDg";
 
 const features = [
   {

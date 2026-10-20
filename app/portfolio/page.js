@@ -4,10 +4,10 @@ import { useRialoWallet } from "../providers";
 import WalletMenu from "../WalletMenu";
 
 // ====== Konfigurasi Rialo Testnet ======
-const AMM_PROGRAM = "D6py9TbbsCTPABZfgpexc8fHXTsDG2x9eJivfzyR7pDi";
-const MINT = "7PrFhdj8oktWHXN7jvQHV2GBXjhFFYjH4rUEom1gZ5dz";
-const POOL_PDA = "5DdJ1354CHMdzj533QgW8ytLvV9pQ4JRuCoL9sg9zkSj";
-const VAULT_TOKEN = "ETx31zoDMa9DB247SZ7pQLms7AMRtRdmh38L2vwQFTFA";
+const AMM_PROGRAM = "8pubFegzYTPJkPdhNzQvDUeCaeiPW6atJavzMseHg3z9";
+const MINT = "DYVLYrQSEskg249QKU8oApqfVbQYsxXFMFFot1keqEgR";
+const POOL_PDA = "CRuE5QMrekhsT9QTALcrDHjVTf2s5mfG5fqHYNCQUxYh";
+const VAULT_TOKEN = "2k15jR1GavDcrJ65rqEp26VbGkLxSn64kqLKQtpx2cDg";
 const TOKEN_2022 = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const ATA_PROGRAM = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 const EXPLORER_TX_BASE = "https://rialo-explorer-testnet-direct.vercel.app/txs/";
