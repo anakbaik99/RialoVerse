@@ -1,3 +1,4 @@
+export const maxDuration = 30;
 export async function POST(req) {
   try {
     const { messages } = await req.json();
