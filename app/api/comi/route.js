@@ -2,13 +2,10 @@ export const maxDuration = 30;
 export async function POST(req) {
   try {
     const { messages } = await req.json();
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    const jKey = process.env.JEROUTER_API_KEY;
-    const jBase = (process.env.JEROUTER_BASE_URL || "").replace(/\/+$/, "");
-    const jModel = process.env.JEROUTER_MODEL;
-
-    if (!jKey || !jBase || !jModel) {
-      return Response.json({ error: "Jerouter env not configured" }, { status: 500 });
+    if (!apiKey) {
+      return Response.json({ error: "API key not configured" }, { status: 500 });
     }
 
     const systemPrompt = `You are COMI, the friendly AI assistant for RialoVerse.
@@ -35,26 +32,69 @@ If asked something you genuinely don't have information on (specific technical d
 
 Keep responses concise and friendly. Always reply in English, regardless of what language the user writes in. Do not use markdown formatting like asterisks for bold text - write in plain text only.`;
 
-    const r = await fetch(`${jBase}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${jKey}` },
-      body: JSON.stringify({
-        model: jModel,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages.map((m) => ({
-            role: m.role === "assistant" ? "assistant" : "user",
-            content: m.content,
-          })),
-        ],
-      }),
-    });
-    const d = await r.json();
-    const text = d.choices?.[0]?.message?.content;
-    if (r.ok && text) return Response.json({ text });
+    const contents = messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
 
-    console.error("Jerouter error", r.status, d.error?.message || d);
-    return Response.json({ error: d.error?.message || `Jerouter status ${r.status}` }, { status: 500 });
+    // 1) Coba Gemini dulu
+    let geminiError = "";
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents,
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+          }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return Response.json({ text });
+        geminiError = "Empty response";
+      } else {
+        geminiError = data.error?.message || `Gemini status ${response.status}`;
+        console.error("Gemini API error", response.status, geminiError);
+      }
+    } catch (e) {
+      geminiError = String(e);
+      console.error("Gemini fetch failed", e);
+    }
+
+    // 2) Cadangan: Jerouter (OpenAI-compatible)
+    const jKey = process.env.JEROUTER_API_KEY;
+    const jBase = (process.env.JEROUTER_BASE_URL || "").replace(/\/+$/, "");
+    const jModel = process.env.JEROUTER_MODEL;
+    if (jKey && jBase && jModel) {
+      try {
+        const r = await fetch(`${jBase}/chat/completions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${jKey}` },
+          body: JSON.stringify({
+            model: jModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...messages.map((m) => ({
+                role: m.role === "assistant" ? "assistant" : "user",
+                content: m.content,
+              })),
+            ],
+          }),
+        });
+        const d = await r.json();
+        const text = d.choices?.[0]?.message?.content;
+        if (r.ok && text) return Response.json({ text });
+        console.error("Jerouter error", r.status, d.error?.message || d);
+      } catch (e) {
+        console.error("Jerouter fetch failed", e);
+      }
+    }
+
+    return Response.json({ error: geminiError || "AI request failed" }, { status: 500 });
   } catch (e) {
     console.error(e);
     return Response.json({ error: "Something went wrong" }, { status: 500 });
